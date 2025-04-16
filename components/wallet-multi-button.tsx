@@ -3,28 +3,38 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
+import { useConnect, useDisconnect, useAccount } from "wagmi"
 
 export function WalletMultiButton() {
   const [walletConnected, setWalletConnected] = useState(false)
-  const [walletAddress, setWalletAddress] = useState("")
+  const [walletAddress, setWalletAddress] = useState<`0x${string}` | undefined |string>(undefined)
   const [isLoading, setIsLoading] = useState(false)
+  const [mounted, setMounted] = useState(false)
+      const {connectors,connect}=useConnect()
+  const { address } = useAccount()
+  const { disconnect } = useDisconnect()
+      useEffect(() => {
+          setMounted(true)
+      }, [])
+  
+     
 
-  // Simulating wallet connection
+
   const connectWallet = async () => {
     setIsLoading(true)
 
     try {
-      // In a real implementation, this would connect to MetaMask or other wallet providers
-      // For demonstration purposes, we're simulating a connection
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const connector=connectors[0];
+      connect({connector})
 
-      const mockAddress = "0x" + Math.random().toString(16).slice(2, 12)
-      setWalletAddress(mockAddress)
+
+
+      setWalletAddress(address)
       setWalletConnected(true)
-
-      // Store wallet info in localStorage for persistence
       localStorage.setItem("walletConnected", "true")
-      localStorage.setItem("walletAddress", mockAddress)
+      if(address)
+      localStorage.setItem("walletAddress", address)
+
     } catch (error) {
       console.error("Error connecting wallet:", error)
     } finally {
@@ -33,14 +43,14 @@ export function WalletMultiButton() {
   }
 
   const disconnectWallet = () => {
+    disconnect()
     setWalletConnected(false)
-    setWalletAddress("")
-    localStorage.removeItem("walletConnected")
-    localStorage.removeItem("walletAddress")
+    setWalletAddress(undefined)
+
   }
 
   useEffect(() => {
-    // Check if wallet was previously connected
+
     const connected = localStorage.getItem("walletConnected") === "true"
     const address = localStorage.getItem("walletAddress")
 
@@ -49,14 +59,16 @@ export function WalletMultiButton() {
       setWalletAddress(address)
     }
   }, [])
+  if (!mounted) return null
 
   if (walletConnected) {
     return (
       <Button variant="outline" onClick={disconnectWallet} className="font-mono">
-        {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+        {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
       </Button>
     )
   }
+
 
   return (
     <Button onClick={connectWallet} disabled={isLoading}>
