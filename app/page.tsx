@@ -2,7 +2,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { WalletMultiButton } from "@/components/wallet-multi-button"
-import WalletOptions from "@/components/WalletOptions"
+
 
 
 export default function Home() {
