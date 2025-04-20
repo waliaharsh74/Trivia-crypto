@@ -26,7 +26,6 @@ export function WalletMultiButton() {
     )
   }
 
- 
   const primaryConnector = connectors[0]
   const isConnecting = isPending && variables?.connector === primaryConnector
 

@@ -10,28 +10,57 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { WalletMultiButton } from "@/components/wallet-multi-button"
+import { useAccount } from "wagmi"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function PlayPage() {
   const router = useRouter()
-  const [walletConnected, setWalletConnected] = useState(false)
+  const [walletConnected, setWalletConnected] = useState(true)
+  const [loading,setloading]=useState(true);
+    const { isConnected } = useAccount()
+  
 
   useEffect(() => {
-    // Check if wallet is connected
-    const connected = localStorage.getItem("walletConnected") === "true"
-    setWalletConnected(connected)
+    setWalletConnected(isConnected)
+    setloading(false)
+    
   }, [])
 
   const handleCreateGame = () => {
-    // In a real implementation, this would create a game and redirect to the game room
+
     router.push("/game/new-game-id")
   }
 
   const handleJoinGame = (gameId: string) => {
-    // In a real implementation, this would join a game with the specified ID
+  
     router.push(`/game/${gameId}`)
   }
+  if(loading){
+    return(
+      <div className="container px-4 py-12 space-y-8">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-10 w-36" />
+        </div>
 
-  if (!walletConnected) {
+        <div className="space-y-4">
+          <Skeleton className="h-12 w-full max-w-md" />
+          <Skeleton className="h-80 w-full max-w-3xl mx-auto" />
+          <Skeleton className="h-80 w-full max-w-3xl mx-auto" />
+        </div>
+
+        <div className="mt-8 max-w-3xl mx-auto space-y-4">
+          <Skeleton className="h-6 w-40" />
+          <div className="grid gap-4 md:grid-cols-2">
+            <Skeleton className="h-60 w-full" />
+            <Skeleton className="h-60 w-full" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isConnected) {
     return (
       <div className="container flex flex-col items-center justify-center min-h-screen px-4 py-12">
         <Card className="w-full max-w-md">
@@ -137,10 +166,10 @@ export default function PlayPage() {
         </TabsContent>
       </Tabs>
 
-      <div className="mt-8 max-w-3xl mx-auto">
+      {/* <div className="mt-8 max-w-3xl mx-auto">
         <h2 className="text-xl font-semibold mb-4">Active Games</h2>
         <div className="grid gap-4 md:grid-cols-2">
-          {/* This would be populated with actual active games */}
+     
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-lg">Science Trivia</CardTitle>
@@ -177,7 +206,7 @@ export default function PlayPage() {
             </CardFooter>
           </Card>
         </div>
-      </div>
+      </div> */}
     </div>
   )
 }
