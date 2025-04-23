@@ -12,10 +12,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { WalletMultiButton } from "@/components/wallet-multi-button"
 import { useAccount } from "wagmi"
 import { Skeleton } from "@/components/ui/skeleton"
+import { getUniqueSlug } from "../server"
+import { toast } from "@/hooks/use-toast"
+import { Toaster } from "@/components/ui/toaster"
 
 export default function PlayPage() {
   const router = useRouter()
   const [walletConnected, setWalletConnected] = useState(true)
+  const [betAmount,setBetAmount]=useState('0.01')
+  const [topic, setTopic] = useState('general')
   const [loading,setloading]=useState(true);
     const { isConnected } = useAccount()
   
@@ -27,8 +32,16 @@ export default function PlayPage() {
   }, [])
 
   const handleCreateGame = () => {
+    if(!betAmount || !topic){
+      toast({title:"Error!",
+        description:"Amount and topic is required"
+      })
+     
+      return
+    }
+    const slug = getUniqueSlug()
 
-    router.push("/game/new-game-id")
+    router.push(`/game/${slug}`)
   }
 
   const handleJoinGame = (gameId: string) => {
@@ -83,10 +96,10 @@ export default function PlayPage() {
 
   return (
     <div className="container px-4 py-12">
-      <div className="flex items-center justify-between mb-8">
+      {/* <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">Play CryptoTrivia</h1>
         <WalletMultiButton />
-      </div>
+      </div> */}
 
       <Tabs defaultValue="create" className="w-full max-w-3xl mx-auto">
         <TabsList className="grid w-full grid-cols-2">
@@ -103,7 +116,7 @@ export default function PlayPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="topic">Topic</Label>
-                <Select defaultValue="general">
+                <Select defaultValue={topic} onValueChange={(value)=>setTopic(value)}>
                   <SelectTrigger id="topic">
                     <SelectValue placeholder="Select a topic" />
                   </SelectTrigger>
@@ -122,15 +135,14 @@ export default function PlayPage() {
               <div className="space-y-2">
                 <Label htmlFor="bet-amount">Bet Amount</Label>
                 <div className="flex space-x-2">
-                  <Input id="bet-amount" type="number" placeholder="0.01" min="0.001" step="0.001" />
+                  <Input id="bet-amount" type="number" placeholder="0.01" min="0.01" step="0.01" value={betAmount} onChange={(e)=>setBetAmount(e.target.value)} />
                   <Select defaultValue="eth">
                     <SelectTrigger className="w-[110px]">
                       <SelectValue placeholder="Currency" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="eth">ETH</SelectItem>
-                      <SelectItem value="sol">SOL</SelectItem>
-                      <SelectItem value="usdc">USDC</SelectItem>
+                    
                     </SelectContent>
                   </Select>
                 </div>
@@ -165,6 +177,7 @@ export default function PlayPage() {
           </Card>
         </TabsContent>
       </Tabs>
+    <Toaster/>
 
       {/* <div className="mt-8 max-w-3xl mx-auto">
         <h2 className="text-xl font-semibold mb-4">Active Games</h2>
