@@ -5,9 +5,9 @@ import Link from 'next/link'
 import { WalletMultiButton } from '@/components/wallet-multi-button'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.dev',
+  title: 'Crypto Tivia',
+  description: 'Created by Walia',
+  
 }
 
 export default function RootLayout({

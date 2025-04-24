@@ -22,9 +22,14 @@ model User{
 }
 model Bet{
   id String @id @default(uuid())
+  slug String @unique
+  amount String
+  topic String
   creator User @relation("Bet Creator",fields: [creatorId],references: [address])
-  joiner User @relation("Bet Joiner",fields: [joinerId],references: [address])
+  joiner User ? @relation("Bet Joiner",fields: [joinerId],references: [address])
   creatorId String
-  joinerId String
+  joinerId String?
+  joinerCompleted Boolean @default(false)
+  creatorCompleted Boolean @default(false)
 }
 

@@ -22,7 +22,7 @@ export default function PlayPage() {
   const [betAmount,setBetAmount]=useState('0.01')
   const [topic, setTopic] = useState('general')
   const [loading,setloading]=useState(true);
-    const { isConnected } = useAccount()
+    const { isConnected ,address} = useAccount()
   
 
   useEffect(() => {
@@ -31,15 +31,24 @@ export default function PlayPage() {
     
   }, [])
 
-  const handleCreateGame = () => {
+  const handleCreateGame = async() => {
     if(!betAmount || !topic){
-      toast({title:"Error!",
+      toast({
+        title:"Error!",
         description:"Amount and topic is required"
       })
-     
+  
       return
     }
-    const slug = getUniqueSlug()
+    const {slug,msg} =await getUniqueSlug(betAmount,topic,address)
+    if(slug.length==0){
+      toast({
+        title: "Error!",
+        description: msg
+      })
+
+      return
+    }
 
     router.push(`/game/${slug}`)
   }
