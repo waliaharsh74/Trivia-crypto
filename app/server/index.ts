@@ -99,7 +99,8 @@ export const startCreatorGame = async (slug: string, address: `0x${string}` | un
     }
 
    
-    return { msg: 'success', content: { questions: stripped } } ;
+    // return { msg: 'success', content: { questions: stripped } } ;
+    return { msg: 'success', content:parsed } ;
 
 
 }
