@@ -10,10 +10,12 @@ import { Label } from "@/components/ui/label"
 import { Loader2, Trophy, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react"
 import { useAccount } from "wagmi"
 import { WalletMultiButton } from "@/components/wallet-multi-button"
-import Link from "next/link"
-import { startCreatorGame } from "@/app/server"
+
+import { isBetValid, startCreatorGame, userValidity } from "@/app/server"
 import { toast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
+import { Input } from "@/components/ui/input"
+
 
 interface Question {
   question: string
@@ -52,9 +54,35 @@ export default function GamePage() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [content, setContent] = useState<any>(null)
+  const [addJoiner, setAddJoiner] = useState(false)
+  const [amount, setAmount] = useState('')
+  const [topic, setTopic] = useState('')
+  const [joining, setJoining] = useState(false)
+  useEffect(()=>{
+    
+    async function checkBetVaidity(){
+
+      const check = await isBetValid(gameId,address);
+      if (!check.isValid){
+        toast({
+          description:check.msg,
+          title:"Error!"
+        })
+        router.push(`/play`)
+       
+      }
+      if(check.amount && check.topic){
+        setAmount(check.amount)
+        setTopic(check.topic)
+        setAddJoiner(true)
+      }
+    }
+    checkBetVaidity()
+    setIsLoading(false)
+  },[])
 
   useEffect(() => {
-    setIsLoading(false)
+   
     const timer = setInterval(() => {
       if (gameState.status === "in-progress" && !gameState.submitted) {
         setGameState(prev => {
@@ -72,7 +100,7 @@ export default function GamePage() {
 
   useEffect(() => {
     if (content) {
-      console.log(content);
+      
       try {
         
         const questions = content.questions
@@ -148,6 +176,22 @@ export default function GamePage() {
       submitted: true
     }))
   }
+  const handleJoin = async () => {
+    if (!address) return
+    setJoining(true)
+    try {
+      const { msg } = await userValidity(gameId,address)
+      setJoining(false)
+      setAddJoiner(false)
+      toast({ title: 'Joined!', description: msg })
+
+      
+    } catch (e: any) {
+      toast({ title: 'Join Failed', description: e.message })
+    } finally {
+      setJoining(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -169,6 +213,54 @@ export default function GamePage() {
           <CardContent className="flex justify-center">
             <WalletMultiButton />
           </CardContent>
+        </Card>
+      </div>
+    )
+  }
+  if(addJoiner){
+    return(
+      <div className="container mx-auto p-4 flex justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Join Quiz Bet</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Label>Game ID</Label>
+            <Input readOnly value={gameId} className="font-mono mb-4" />
+
+           
+
+            { (
+              <>
+                <p className="mb-2">
+                  <span className="font-semibold">Topic:</span> {topic}
+                </p>
+                <p className="mb-4">
+                  <span className="font-semibold">Bet Amount:</span> {amount} ETH
+                </p>
+               
+                {isConnected && (
+                  <Button
+                    className="w-full"
+                    onClick={handleJoin}
+                    disabled={joining}
+                  >
+                    {joining ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Joining...
+                      </>
+                    ) : (
+                      "Join Bet"
+                    )}
+                  </Button>
+                )}
+              </>
+            )}
+          </CardContent>
+          <CardFooter>
+            <Button variant="link" onClick={() => router.push('/play')}>Back</Button>
+          </CardFooter>
         </Card>
       </div>
     )

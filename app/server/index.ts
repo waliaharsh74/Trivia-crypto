@@ -2,15 +2,11 @@
 'use server'
 import { generateSlug } from "random-word-slugs";
 import prisma from "@/db"
-import OpenAI from "openai";
+
 import Groq from "groq-sdk";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-const client = new OpenAI({
-    apiKey: process.env.GROQ_API_KEY,
-    baseURL: "https://api.groq.com/openai/v1"
-});
 
 export const getUniqueSlug = async (betAmount: string, topic: string, address: `0x${string}` | undefined) => {
     if(!address)return{
@@ -53,7 +49,6 @@ export const getUniqueSlug = async (betAmount: string, topic: string, address: `
 
 
 }
-
 export const startCreatorGame = async (slug: string, address: `0x${string}` | undefined) => {
    
     const bet = await prisma.bet.findFirst({
@@ -67,9 +62,7 @@ export const startCreatorGame = async (slug: string, address: `0x${string}` | un
     }
   
     if((bet.creatorId!=address ) && (bet?.joinerId!=address)){
-        console.log(bet.creatorId);
-        console.log("object");
-        console.log(address);
+     
         return {
             msg: "You are not authorised for this bet",
             content: null
@@ -92,15 +85,21 @@ export const startCreatorGame = async (slug: string, address: `0x${string}` | un
     const jsonString = raw.trim().replace(/^```json\s*/, '').replace(/\s*```$/, '');
 
     let parsed: { questions: any[] };
+    let stripped
+    
     try {
         parsed = JSON.parse(jsonString);
+         stripped = parsed.questions.map(({ question, options }) => ({
+            question,
+            options
+        }));
     } catch (err) {
         console.error('Failed to parse LLM JSON:', err, raw);
         return { msg: 'Failed to parse quiz content', content: null };
     }
 
    
-    return { msg: 'success', content: parsed };
+    return { msg: 'success', content: { questions: stripped } } ;
 
 
 }
@@ -119,4 +118,76 @@ export async function getGroqChatCompletion(topic:string) {
         ],
         model: "llama-3.3-70b-versatile",
     });
+}
+export const isBetValid = async (slug: string,address: `0x${string}` | undefined)=>{
+    const bet = await prisma.bet.findFirst({
+        where: { slug }
+    })
+    if (!bet) {
+        return {
+            msg: `Oops No bet exists for the Game Id with name: ${slug}`,
+            isValid: false
+        }
+    }
+    if (bet.joinerCompleted && bet.creatorCompleted) {
+        return {
+            msg: `Bet is already resolved`,
+            isValid: false
+        }
+    }
+    if (bet.creatorId!==address && !bet.joinerId) {
+        return {
+            msg: `you can join the bet by paying ${bet.amount}`,
+            isValid: true,
+            amount:bet.amount,
+            topic:bet.topic
+        }
+    }
+    return {
+        msg:"something might be wrong",
+        isValid:false
+    }
+    
+   
+}
+export const userValidity = async (slug: string, address: `0x${string}` | undefined)=>{
+    if (!address) return {
+        msg: "addresss is empty",
+        slug: ""
+    }
+    const user = await prisma.user.upsert({
+        where: {
+            address
+        },
+        update: {},
+        create: {
+            address
+        }
+
+    })
+    if (!user) {
+        return {
+            msg: "Error in creating User",
+            
+        }
+    }
+    const bet=await prisma.bet.update({
+        where:{
+            slug
+        },
+        data:{
+            joinerId:address
+
+        }
+    })
+    console.log("bet",bet);
+    if (!bet) {
+        return {
+            msg: "Error in updating Bet",
+           
+        }
+    }
+    return {
+        msg: "Bet Joined Successfully!",
+    }
 }

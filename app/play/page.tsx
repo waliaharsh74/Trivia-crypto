@@ -18,7 +18,7 @@ import { Toaster } from "@/components/ui/toaster"
 
 export default function PlayPage() {
   const router = useRouter()
-  const [walletConnected, setWalletConnected] = useState(true)
+  const [gameId,setGameId]=useState(''); 
   const [betAmount,setBetAmount]=useState('0.01')
   const [topic, setTopic] = useState('general')
   const [loading,setloading]=useState(true);
@@ -26,7 +26,7 @@ export default function PlayPage() {
   
 
   useEffect(() => {
-    setWalletConnected(isConnected)
+   
     setloading(false)
     
   }, [])
@@ -53,7 +53,7 @@ export default function PlayPage() {
     router.push(`/game/${slug}`)
   }
 
-  const handleJoinGame = (gameId: string) => {
+  const handleJoinGame = () => {
   
     router.push(`/game/${gameId}`)
   }
@@ -175,11 +175,11 @@ export default function PlayPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="game-id">Game ID</Label>
-                <Input id="game-id" placeholder="Enter game ID" />
+                <Input id="game-id" value={gameId} onChange={(e) => setGameId(e.target.value)} placeholder="Enter game ID" />
               </div>
             </CardContent>
             <CardFooter>
-              <Button className="w-full" onClick={() => handleJoinGame("game-id-from-input")}>
+              <Button className="w-full" onClick={handleJoinGame}>
                 Join Game
               </Button>
             </CardFooter>
