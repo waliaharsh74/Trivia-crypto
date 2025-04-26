@@ -11,7 +11,7 @@ import { Loader2, Trophy, AlertCircle, ChevronLeft, ChevronRight } from "lucide-
 import { useAccount } from "wagmi"
 import { WalletMultiButton } from "@/components/wallet-multi-button"
 
-import { isBetValid, startCreatorGame, userValidity } from "@/app/server"
+import { calculateScore, isBetValid, startCreatorGame, userValidity } from "@/app/server"
 import { toast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { Input } from "@/components/ui/input"
@@ -163,9 +163,10 @@ export default function GamePage() {
     if (gameState.submitted) return
 
 
-    const score = gameState.questions.reduce((acc, question, index) => {
-      return acc + (gameState.playerAnswers[index] === question.correctIndex ? 1 : 0)
-    }, 0)
+    // const score = gameState.questions.reduce((acc, question, index) => {
+    //   return acc + (gameState.playerAnswers[index] === question.correctIndex ? 1 : 0)
+    // }, 0)
+    const score = await calculateScore(gameState.playerAnswers,gameId,address);
 
 
 
@@ -290,7 +291,6 @@ export default function GamePage() {
             <p className="text-xl mb-6">Your Score: {gameState.playerScore}/{gameState.questions.length}</p>
             <div className="flex gap-4 justify-center">
               <Button onClick={() => router.push("/")}>Home</Button>
-              <Button variant="outline" onClick={() => window.location.reload()}>Play Again</Button>
             </div>
           </CardContent>
         </Card>

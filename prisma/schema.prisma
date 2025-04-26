@@ -31,5 +31,15 @@ model Bet{
   joinerId String?
   joinerCompleted Boolean @default(false)
   creatorCompleted Boolean @default(false)
+  questions Question[]
 }
+model Question{
+  id String @id @default(uuid())
+  bet Bet @relation(fields: [slug],references: [slug])
+  slug String 
+  question String
+  options String[]
+  correctIndex Int
+}
+
 
