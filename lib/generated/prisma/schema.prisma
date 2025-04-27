@@ -1,0 +1,47 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  address     String @id
+  createdBets Bet[]  @relation("Bet Creator")
+  joinedBets  Bet[]  @relation("Bet Joiner")
+}
+
+model Bet {
+  id               String     @id @default(uuid())
+  slug             String     @unique
+  amount           String
+  topic            String
+  creator          User       @relation("Bet Creator", fields: [creatorId], references: [address])
+  joiner           User?      @relation("Bet Joiner", fields: [joinerId], references: [address])
+  creatorId        String
+  joinerId         String?
+  joinerCompleted  Boolean    @default(false)
+  creatorCompleted Boolean    @default(false)
+  cretorScore      Int?
+  joinerScore      Int?
+  winner           String?
+  questions        Question[]
+}
+
+model Question {
+  id           String   @id @default(uuid())
+  bet          Bet      @relation(fields: [slug], references: [slug])
+  slug         String
+  question     String
+  options      String[]
+  correctIndex Int
+}
