@@ -1,133 +1,78 @@
-
 'use server'
-import { generateSlug } from "random-word-slugs";
-import prisma from "@/db"
 
+import { generateSlug } from "random-word-slugs";
 import Groq from "groq-sdk";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+// ⛔️ NO top-level prisma import anymore
+// import prisma from "@/db"
 
 export const getUniqueSlug = async (betAmount: string, topic: string, address: `0x${string}` | undefined) => {
-    if (!address) return {
-        msg: "addresss is empty",
-        slug: ""
-    }
-    const user = await prisma.user.upsert({
-        where: {
-            address
-        },
-        update: {},
-        create: {
-            address
-        }
+    const prisma = (await import("@/db")).default;
 
-    })
-    if (!user) {
-        return {
-            msg: "Error in creating User",
-            slug: ""
-        }
-    }
+    if (!address) return { msg: "address is empty", slug: "" };
+
+    const user = await prisma.user.upsert({
+        where: { address },
+        update: {},
+        create: { address }
+    });
+
+    if (!user) return { msg: "Error in creating User", slug: "" };
 
     const slug = generateSlug();
     const bet = await prisma.bet.create({
-        data: {
-            slug,
-            creatorId: address,
-            amount: betAmount,
-            topic
-        }
-    })
-    if (!bet) {
-        return {
-            msg: "Error in creating Bet",
-            slug: ""
-        }
-    }
-    return { msg: "Bet Created Succesfully!", slug }
+        data: { slug, creatorId: address, amount: betAmount, topic }
+    });
 
+    if (!bet) return { msg: "Error in creating Bet", slug: "" };
 
-}
+    return { msg: "Bet Created Successfully!", slug };
+};
+
 export const startCreatorGame = async (slug: string, address: `0x${string}` | undefined) => {
+    const prisma = (await import("@/db")).default;
 
-    const bet = await prisma.bet.findFirst({
-        where: { slug }
-    })
-    if (!bet) {
-        return {
-            msg: "Oops No bet exists for this Game Id",
-            content: null
-        }
+    const bet = await prisma.bet.findFirst({ where: { slug } });
+    if (!bet) return { msg: "Oops No bet exists for this Game Id", content: null };
+
+    if ((bet.creatorId !== address) && (bet?.joinerId !== address)) {
+        return { msg: "You are not authorized for this bet", content: null };
     }
 
-    if ((bet.creatorId != address) && (bet?.joinerId != address)) {
-
-        return {
-            msg: "You are not authorised for this bet",
-            content: null
-        }
+    if ((bet.creatorId === address && bet.creatorCompleted) || (bet?.joinerId === address && bet.joinerCompleted)) {
+        return { msg: "You have already completed this bet!", content: null };
     }
 
-    if ((bet.creatorId == address && bet.creatorCompleted) || (bet?.joinerId == address && bet.joinerCompleted)) {
-        
-        return {
-            msg: "you have already completed this bet!",
-            content: null
-        }
-    }
-
-    const chatCompletion = await getGroqChatCompletion(bet?.topic);
-    console.log(chatCompletion.choices[0]?.message?.content || "");
-
+    const chatCompletion = await getGroqChatCompletion(bet.topic);
     const raw = chatCompletion.choices[0]?.message?.content || '';
-
 
     const jsonString = raw.trim().replace(/^```json\s*/, '').replace(/\s*```$/, '');
 
-    let parsed: { questions: Question[] };
-    let stripped
-
-    const allQuestions = await prisma.question.findMany({
-        where: {
-            slug
-        }
-    })
-    if (allQuestions.length != 0) {
-        stripped = allQuestions.map(({ question, options }) => ({
-            question,
-            options
-        }));
+    const allQuestions = await prisma.question.findMany({ where: { slug } });
+    if (allQuestions.length !== 0) {
+        const stripped = allQuestions.map(({ question, options }) => ({ question, options }));
         return { msg: 'success', content: { questions: stripped } };
     }
+
     try {
-        parsed = JSON.parse(jsonString);
-        const allPromises = parsed.questions.map((item) =>
+        const parsed = JSON.parse(jsonString);
+        const allPromises = parsed.questions.map((item:Question) =>
             prisma.question.create({
-                data: {
-                    question: item.question,
-                    correctIndex: item.correctIndex,
-                    options: item.options,
-                    slug
-                }
+                data: { question: item.question, correctIndex: item.correctIndex, options: item.options, slug }
             })
-        )
-        await Promise.all(allPromises)
-        stripped = parsed.questions.map(({ question, options }) => ({
-            question,
-            options
-        }));
+        );
+        await Promise.all(allPromises);
+
+        const stripped = parsed.questions.map(({ question, options }: { question: string; options: string[] }) => ({ question, options }));
+        return { msg: 'success', content: { questions: stripped } };
     } catch (err) {
         console.error('Failed to parse LLM JSON:', err, raw);
         return { msg: 'Failed to parse quiz content', content: null };
     }
+};
 
-
-    // return { msg: 'success', content: { questions: stripped } } ;
-    return { msg: 'success', content: parsed };
-
-
-}
 export async function getGroqChatCompletion(topic: string) {
     return groq.chat.completions.create({
         messages: [
@@ -144,159 +89,91 @@ export async function getGroqChatCompletion(topic: string) {
         model: "llama-3.3-70b-versatile",
     });
 }
+
 export const isBetValid = async (slug: string, address: `0x${string}` | undefined) => {
-    const bet = await prisma.bet.findFirst({
-        where: { slug }
-    })
-    if (!bet) {
-        return {
-            msg: `Oops No bet exists for the Game Id with name: ${slug}`,
-            isValid: false
-        }
-    }
+    const prisma = (await import("@/db")).default;
+
+    const bet = await prisma.bet.findFirst({ where: { slug } });
+    if (!bet) return { msg: `Oops No bet exists for Game ID: ${slug}`, isValid: false };
+
     if (bet.joinerCompleted && bet.creatorCompleted) {
-        return {
-            msg: `Bet is already resolved`,
-            isValid: false
-        }
+        return { msg: `Bet is already resolved`, isValid: false };
     }
+
     if (bet.creatorId !== address && !bet.joinerId) {
-        return {
-            msg: `you can join the bet by paying ${bet.amount}`,
-            isValid: true,
-            amount: bet.amount,
-            topic: bet.topic
-        }
-    }
-    return {
-        msg: "you can play game",
-        isValid: true
+        return { msg: `You can join the bet by paying ${bet.amount}`, isValid: true, amount: bet.amount, topic: bet.topic };
     }
 
+    return { msg: "You can play game", isValid: true };
+};
 
-}
 export const userValidity = async (slug: string, address: `0x${string}` | undefined) => {
-    if (!address) return {
-        msg: "addresss is empty",
-        slug: ""
-    }
+    const prisma = (await import("@/db")).default;
+
+    if (!address) return { msg: "address is empty", slug: "" };
+
     const user = await prisma.user.upsert({
-        where: {
-            address
-        },
+        where: { address },
         update: {},
-        create: {
-            address
-        }
+        create: { address }
+    });
 
-    })
-    if (!user) {
-        return {
-            msg: "Error in creating User",
+    if (!user) return { msg: "Error in creating User" };
 
-        }
-    }
     const bet = await prisma.bet.update({
-        where: {
-            slug
-        },
-        data: {
-            joinerId: address
+        where: { slug },
+        data: { joinerId: address }
+    });
 
-        }
-    })
-    console.log("bet", bet);
-    if (!bet) {
-        return {
-            msg: "Error in updating Bet",
+    if (!bet) return { msg: "Error in updating Bet" };
 
-        }
-    }
-    return {
-        msg: "Bet Joined Successfully!",
-    }
-}
+    return { msg: "Bet Joined Successfully!" };
+};
+
 export const calculateScore = async (answers: (number | null)[], slug: string, address: `0x${string}` | undefined) => {
-    if (answers.length == 0 || !address || !slug) {
-        return 0
-    }
-    const questionWithAnswers = await prisma.question.findMany({
-        where: {
-            slug
-        }
-    })
-    const bet=await prisma.bet.findFirst({
-        where:{
-            slug
-        }
-    })
-    const score = questionWithAnswers.reduce((acc, question, index) => {
-        return acc + (answers[index] === question.correctIndex ? 1 : 0)
-    }, 0)
-    if(bet?.creatorId==address){
-        await prisma.bet.update({
-            where:{
-                slug
-            },
-            data:{
-                creatorCompleted:true,
-                cretorScore:score
-            }
-        })
-    }else{
-        await prisma.bet.update({
-            where: {
-                slug
-            },
-            data: {
-                joinerCompleted: true,
-                joinerScore:score
-            }
-        })
-    }
-  
-    return score
+    const prisma = (await import("@/db")).default;
 
-}
+    if (answers.length === 0 || !address || !slug) return 0;
+
+    const questionWithAnswers = await prisma.question.findMany({ where: { slug } });
+    const bet = await prisma.bet.findFirst({ where: { slug } });
+
+    const score = questionWithAnswers.reduce((acc, question, index) => {
+        return acc + (answers[index] === question.correctIndex ? 1 : 0);
+    }, 0);
+
+    if (bet?.creatorId === address) {
+        await prisma.bet.update({
+            where: { slug },
+            data: { creatorCompleted: true, cretorScore: score }
+        });
+    } else {
+        await prisma.bet.update({
+            where: { slug },
+            data: { joinerCompleted: true, joinerScore: score }
+        });
+    }
+
+    return score;
+};
+
 export const CheckWinner = async (slug: string) => {
- 
-   
-    const bet=await prisma.bet.findFirst({
-        where:{
-            slug
-        }
-    })
-    if(!bet){
-        return {
-            msg: `Oops No bet exists for the Game Id with name: ${slug}`,
-         
-            creatorScore:null,
-            joinerScore: null,
-            winner: null
-        }
+    const prisma = (await import("@/db")).default;
+
+    const bet = await prisma.bet.findFirst({ where: { slug } });
+    if (!bet) {
+        return { msg: `Oops No bet exists for Game ID: ${slug}`, creatorScore: null, joinerScore: null, winner: null };
     }
+
     if (bet.joinerCompleted && bet.creatorCompleted) {
-        return {
-            msg: `Winner will get amount Shortly!`,
-         
-            creatorScore:bet.cretorScore,
-            joinerScore:bet.joinerScore,
-            winner:bet?.winner
-        }
+        return { msg: `Winner will get amount Shortly!`, creatorScore: bet.cretorScore, joinerScore: bet.joinerScore, winner: bet.winner };
     }
-    return {
-     
-            msg: `bet is not completed yet`,
-      
-            creatorScore:bet.cretorScore,
-            joinerScore:bet.joinerScore,
-            winner:bet?.winner
-        
-    }
-   
-}
+
+    return { msg: `Bet is not completed yet`, creatorScore: bet.cretorScore, joinerScore: bet.joinerScore, winner: bet.winner };
+};
+
 interface Question {
-    question: string
-    options: string[]
-    correctIndex: number
+    question: string;
+    options: string[];
+    correctIndex: number;
 }
