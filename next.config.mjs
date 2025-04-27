@@ -16,7 +16,7 @@ const nextConfig = {
     parallelServerCompiles: true,
   
     serverActions: {
-      enabled: false,   
+      enabled: false,  
     },
     typedRoutes: false,
   },
