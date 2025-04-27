@@ -14,9 +14,9 @@ const nextConfig = {
     webpackBuildWorker: true,
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
-    forceDynamic: true,
+  
     serverActions: {
-      enabled: false,   // correct way
+      enabled: false,   
     },
     typedRoutes: false,
   },
