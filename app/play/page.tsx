@@ -15,6 +15,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { getUniqueSlug } from "../server"
 import { toast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
+import { useSendTransaction, useBalance } from 'wagmi'
+import { parseEther } from 'viem'
 
 export default function PlayPage() {
   const router = useRouter()
@@ -23,6 +25,10 @@ export default function PlayPage() {
   const [topic, setTopic] = useState('general')
   const [loading,setloading]=useState(true);
     const { isConnected ,address} = useAccount()
+  const balance = useBalance({
+    address
+  })
+  const { data: hash, sendTransaction } = useSendTransaction()
   
 
   useEffect(() => {
@@ -32,6 +38,7 @@ export default function PlayPage() {
   }, [])
 
   const handleCreateGame = async() => {
+
     if(!betAmount || !topic){
       toast({
         title:"Error!",
@@ -40,6 +47,17 @@ export default function PlayPage() {
   
       return
     }
+    console.log(balance?.data?.formatted);
+    if(!balance || balance.data && balance?.data?.formatted<=betAmount){
+      toast({
+        title: "Error!",
+        description: "Insufficent Balance to place bet"
+      })
+
+    }
+  
+ 
+    // sendTransaction({ to: '0xF1C7fCfdf0e55ed652EFcF3C7bAE5C6D88D7E88E', value:parseEther(betAmount)})
     const {slug,msg} =await getUniqueSlug(betAmount,topic,address)
     if(slug.length==0){
       toast({
@@ -56,6 +74,10 @@ export default function PlayPage() {
   const handleJoinGame = () => {
   
     router.push(`/game/${gameId}`)
+  }
+  const handleCheckWinner = () => {
+  
+    router.push(`/winner/${gameId}`)
   }
   if(loading){
     return(
@@ -111,9 +133,10 @@ export default function PlayPage() {
       </div> */}
 
       <Tabs defaultValue="create" className="w-full max-w-3xl mx-auto">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="create">Create Game</TabsTrigger>
           <TabsTrigger value="join">Join Game</TabsTrigger>
+          <TabsTrigger value="winner">Winner</TabsTrigger>
         </TabsList>
 
         <TabsContent value="create">
@@ -181,6 +204,25 @@ export default function PlayPage() {
             <CardFooter>
               <Button className="w-full" onClick={handleJoinGame}>
                 Join Game
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        <TabsContent value="winner">
+          <Card>
+            <CardHeader>
+              <CardTitle>Check Winner of Existing Game</CardTitle>
+              <CardDescription>Enter a game ID to check winner of an existing trivia game.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="game-id">Game ID</Label>
+                <Input id="game-id" value={gameId} onChange={(e) => setGameId(e.target.value)} placeholder="Enter game ID" />
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button className="w-full" onClick={handleCheckWinner}>
+                Check Winner
               </Button>
             </CardFooter>
           </Card>

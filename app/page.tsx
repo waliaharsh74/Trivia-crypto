@@ -37,11 +37,7 @@ export default function Home() {
                     Play Now
                   </Button>
                 </Link>
-                <Link href="/leaderboard">
-                  <Button variant="outline" size="lg" className="px-8">
-                    Leaderboard
-                  </Button>
-                </Link>
+              
               </div>
             </div>
           </div>

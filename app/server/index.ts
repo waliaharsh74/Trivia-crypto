@@ -70,6 +70,7 @@ export const startCreatorGame = async (slug: string, address: `0x${string}` | un
     }
 
     if ((bet.creatorId == address && bet.creatorCompleted) || (bet?.joinerId == address && bet.joinerCompleted)) {
+        
         return {
             msg: "you have already completed this bet!",
             content: null
@@ -224,11 +225,75 @@ export const calculateScore = async (answers: (number | null)[], slug: string, a
             slug
         }
     })
+    const bet=await prisma.bet.findFirst({
+        where:{
+            slug
+        }
+    })
     const score = questionWithAnswers.reduce((acc, question, index) => {
         return acc + (answers[index] === question.correctIndex ? 1 : 0)
     }, 0)
+    if(bet?.creatorId==address){
+        await prisma.bet.update({
+            where:{
+                slug
+            },
+            data:{
+                creatorCompleted:true,
+                cretorScore:score
+            }
+        })
+    }else{
+        await prisma.bet.update({
+            where: {
+                slug
+            },
+            data: {
+                joinerCompleted: true,
+                joinerScore:score
+            }
+        })
+    }
+  
     return score
 
+}
+export const CheckWinner = async (slug: string) => {
+ 
+   
+    const bet=await prisma.bet.findFirst({
+        where:{
+            slug
+        }
+    })
+    if(!bet){
+        return {
+            msg: `Oops No bet exists for the Game Id with name: ${slug}`,
+         
+            creatorScore:null,
+            joinerScore: null,
+            winner: null
+        }
+    }
+    if (bet.joinerCompleted && bet.creatorCompleted) {
+        return {
+            msg: `Winner will get amount Shortly!`,
+         
+            creatorScore:bet.cretorScore,
+            joinerScore:bet.joinerScore,
+            winner:bet?.winner
+        }
+    }
+    return {
+     
+            msg: `bet is not completed yet`,
+      
+            creatorScore:bet.cretorScore,
+            joinerScore:bet.joinerScore,
+            winner:bet?.winner
+        
+    }
+   
 }
 interface Question {
     question: string

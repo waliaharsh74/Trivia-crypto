@@ -272,11 +272,14 @@ export default function GamePage() {
       <div className="container flex flex-col items-center justify-center min-h-screen px-4">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6 text-center">
+            <h2 className="text-2xl font-bold mb-4">Game Created! Ready to play?</h2>
             <Button className="w-full" onClick={handleStartGame}>
               Start Game
             </Button>
           </CardContent>
         </Card>
+        <Toaster/>
+        
       </div>
     )
   }
