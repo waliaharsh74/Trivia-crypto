@@ -5,8 +5,7 @@ import Groq from "groq-sdk";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// ⛔️ NO top-level prisma import anymore
-// import prisma from "@/db"
+
 
 export const getUniqueSlug = async (betAmount: string, topic: string, address: `0x${string}` | undefined) => {
     const prisma = (await import("@/db")).default;
