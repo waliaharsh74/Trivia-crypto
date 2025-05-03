@@ -12,75 +12,141 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { WalletMultiButton } from "@/components/wallet-multi-button"
 import { useAccount } from "wagmi"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getUniqueSlug } from "../server"
+import { getUniqueSlug, createGame } from "../server"
 import { toast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { useSendTransaction, useBalance } from 'wagmi'
+import { useSendTransaction, useBalance, useWaitForTransactionReceipt, useWriteContract } from 'wagmi'
+import { waitForTransactionReceipt } from 'wagmi/actions'
+import { wagmiAbi } from "@/utils/Abt"
 import { parseEther } from 'viem'
 
 export default function PlayPage() {
   const router = useRouter()
-  const [gameId,setGameId]=useState(''); 
-  const [betAmount,setBetAmount]=useState('0.01')
+  const [gameId, setGameId] = useState('');
+  const [betAmount, setBetAmount] = useState('0.01')
   const [topic, setTopic] = useState('general')
-  const [loading,setloading]=useState(true);
-    const { isConnected ,address} = useAccount()
+  const [creating, setCreating] = useState(false)
+  const [txHash, setTxHash] = useState<`0x${string}` | null>(null)
+  const [slugRef, setSlugRef] = useState("")
+
+  const [loading, setloading] = useState(true);
+  const { isConnected, address } = useAccount()
+  const { writeContractAsync, isSuccess } = useWriteContract()
   const balance = useBalance({
     address
   })
-  const { data: hash, sendTransaction } = useSendTransaction()
-  
+  // const { data: hash, sendTransaction,isPending } = useSendTransaction()
+  // const { isLoading: isConfirming, isSuccess: isConfirmed } =
+  //   useWaitForTransactionReceipt({
+  //     hash,
+  //   })
 
+  const result = useWaitForTransactionReceipt({
+    hash: txHash || "0x",
+    query: {
+      enabled: !!txHash,
+    },
+    confirmations: 1,
+  })
   useEffect(() => {
-   
+
     setloading(false)
-    
+
   }, [])
 
-  const handleCreateGame = async() => {
+  useEffect(() => {
+     const  TransferToPlay=async()=>{
+       if (result?.isFetched && result.status === 'success' && txHash) {
+         await createGame(betAmount,topic,slugRef,address,txHash)
+          console.log("Transaction confirmed ✅")
+         router.push(`/game/${slugRef}`)
+       }
+     }
+    TransferToPlay()
+    
+  }, [result.isFetched, result.status])
 
-    if(!betAmount || !topic){
+  const handleCreateGame = async () => {
+
+    if (!betAmount || !topic) {
       toast({
-        title:"Error!",
-        description:"Amount and topic is required"
+        title: "Error!",
+        description: "Amount and topic is required"
       })
-  
+
       return
     }
     console.log(balance?.data?.formatted);
-    if(!balance || balance.data && balance?.data?.formatted<=betAmount){
+    if (!balance || balance.data && balance?.data?.formatted <= betAmount) {
       toast({
         title: "Error!",
         description: "Insufficent Balance to place bet"
       })
 
     }
-  
- 
+
+
     // sendTransaction({ to: '0xF1C7fCfdf0e55ed652EFcF3C7bAE5C6D88D7E88E', value:parseEther(betAmount)})
-    const {slug,msg} =await getUniqueSlug(betAmount,topic,address)
-    if(slug.length==0){
+    // 0x4032E8E21e1c09a9E5910F99dA6454FFae530Bcf
+    try {
+
+      setCreating(true)
+
+      const { slug, msg } = await getUniqueSlug()
+
+      if (slug.length == 0) {
+        toast({
+          title: "Error!",
+          description: msg
+        })
+
+        return
+      }
+      setSlugRef(slug)
+
+      const tx = await writeContractAsync({
+        address: '0x4032E8E21e1c09a9E5910F99dA6454FFae530Bcf',
+        abi: wagmiAbi,
+        functionName: "createBet",
+        args: [slug, topic],
+        value: parseEther(betAmount),
+      });
+
       toast({
-        title: "Error!",
-        description: msg
+        title: "Transaction Sent!",
+        description: `Tx Hash: ${tx}`,
+      });
+
+      setTxHash(tx)
+
+      const result = useWaitForTransactionReceipt({
+        hash: tx,
       })
 
-      return
+      console.log(result);
+
+      router.push(`/game/${slug}`)
+    } catch (error) {
+      console.log(error);
+      toast({
+        title: "Error!",
+        description: "Unable to create game right now"
+      })
+      setCreating(false)
     }
 
-    router.push(`/game/${slug}`)
   }
 
   const handleJoinGame = () => {
-  
+
     router.push(`/game/${gameId}`)
   }
   const handleCheckWinner = () => {
-  
+
     router.push(`/winner/${gameId}`)
   }
-  if(loading){
-    return(
+  if (loading) {
+    return (
       <div className="container px-4 py-12 space-y-8">
         <div className="flex items-center justify-between">
           <Skeleton className="h-10 w-64" />
@@ -148,7 +214,7 @@ export default function PlayPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="topic">Topic</Label>
-                <Select defaultValue={topic} onValueChange={(value)=>setTopic(value)}>
+                <Select defaultValue={topic} onValueChange={(value) => setTopic(value)}>
                   <SelectTrigger id="topic">
                     <SelectValue placeholder="Select a topic" />
                   </SelectTrigger>
@@ -167,14 +233,14 @@ export default function PlayPage() {
               <div className="space-y-2">
                 <Label htmlFor="bet-amount">Bet Amount</Label>
                 <div className="flex space-x-2">
-                  <Input id="bet-amount" type="number" placeholder="0.01" min="0.01" step="0.01" value={betAmount} onChange={(e)=>setBetAmount(e.target.value)} />
+                  <Input id="bet-amount" type="number" placeholder="0.01" min="0.01" step="0.01" value={betAmount} onChange={(e) => setBetAmount(e.target.value)} />
                   <Select defaultValue="eth">
                     <SelectTrigger className="w-[110px]">
                       <SelectValue placeholder="Currency" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="eth">ETH</SelectItem>
-                    
+
                     </SelectContent>
                   </Select>
                 </div>
@@ -182,8 +248,8 @@ export default function PlayPage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button className="w-full" onClick={handleCreateGame}>
-                Create Game
+              <Button className="w-full" onClick={handleCreateGame} disabled={creating}>
+                {creating ? "Waiting for Confirmation..." : "Create Game"}
               </Button>
             </CardFooter>
           </Card>
@@ -228,7 +294,7 @@ export default function PlayPage() {
           </Card>
         </TabsContent>
       </Tabs>
-    <Toaster/>
+      <Toaster />
 
       {/* <div className="mt-8 max-w-3xl mx-auto">
         <h2 className="text-xl font-semibold mb-4">Active Games</h2>

@@ -2,12 +2,39 @@
 
 import { generateSlug } from "random-word-slugs";
 import Groq from "groq-sdk";
+import { createPublicClient, http, parseEther } from 'viem'
+import { mainnet,sepolia } from 'viem/chains'
+
+const client = createPublicClient({
+    chain: sepolia, // or sepolia, hardhat, etc.
+    transport: http()
+})
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 
+const CONTRACT_ADDRESS ='0x4032E8E21e1c09a9E5910F99dA6454FFae530Bcf'
+export const getUniqueSlug = async () => {
+    const prisma = (await import("@/db")).default;
 
-export const getUniqueSlug = async (betAmount: string, topic: string, address: `0x${string}` | undefined) => {
+    let slug = generateSlug();
+    while((await prisma.bet.findFirst({where:{slug}})))
+    {
+        slug = generateSlug();
+    }
+
+    return { msg: "Bet Created Successfully!", slug };
+};
+export async function verifyTransaction(txHash: `0x${string}`, address: `0x${string}`, betAmount: string){
+    const receipt = await client.getTransactionReceipt({ hash: txHash })
+    const tx = await client.getTransaction({ hash: txHash })
+
+    if (!receipt || !tx) return false
+    if (tx.from.toLowerCase() !== address.toLowerCase()) return false
+    if (tx.to?.toLowerCase() !== CONTRACT_ADDRESS.toLowerCase()) return false
+    if (tx.value !== parseEther(betAmount)) return false
+}
+export const createGame = async (betAmount: string, topic: string, slug: string, address: `0x${string}` | undefined, txHash: `0x${string}`) => {
     const prisma = (await import("@/db")).default;
 
     if (!address) return { msg: "address is empty", slug: "" };
@@ -19,8 +46,12 @@ export const getUniqueSlug = async (betAmount: string, topic: string, address: `
     });
 
     if (!user) return { msg: "Error in creating User", slug: "" };
+    const verify = await verifyTransaction(txHash,address,betAmount)
+    if (!verify) return { msg: "Can't Verify this Transaction", slug: "" };
 
-    const slug = generateSlug();
+    
+
+    // const slug = generateSlug();
     const bet = await prisma.bet.create({
         data: { slug, creatorId: address, amount: betAmount, topic }
     });
