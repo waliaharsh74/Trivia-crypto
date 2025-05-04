@@ -8,13 +8,15 @@ import { Progress } from "@/components/ui/progress"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Loader2, Trophy, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react"
-import { useAccount } from "wagmi"
+import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi"
 import { WalletMultiButton } from "@/components/wallet-multi-button"
 
 import { calculateScore, isBetValid, startCreatorGame, userValidity } from "@/app/server"
 import { toast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { Input } from "@/components/ui/input"
+import { wagmiAbi } from "@/utils/Abt"
+import { parseEther } from "viem"
 
 
 interface Question {
@@ -54,35 +56,67 @@ export default function GamePage() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [content, setContent] = useState<any>(null)
+  const [gameStaring, setGameStarting] = useState(false)
   const [addJoiner, setAddJoiner] = useState(false)
   const [amount, setAmount] = useState('')
   const [topic, setTopic] = useState('')
   const [joining, setJoining] = useState(false)
-  useEffect(()=>{
-    
-    async function checkBetVaidity(){
+  const [txHash, setTxHash] = useState<`0x${string}` | null>(null)
+  const { writeContractAsync } = useWriteContract()
+  const result = useWaitForTransactionReceipt({
+    hash: txHash || "0x",
+    query: {
+      enabled: !!txHash,
+    },
+    confirmations: 1,
+  })
 
-      const check = await isBetValid(gameId,address);
-      if (!check.isValid){
+
+  useEffect(() => {
+    setIsLoading(true)
+    async function checkBetVaidity() {
+      if (!address) return
+      const check = await isBetValid(gameId, address);
+      if (!check.isValid) {
         toast({
-          description:check.msg,
-          title:"Error!"
+          description: check.msg,
+          title: "Error!"
         })
-        router.push(`/play`)
-       
+        setAddJoiner(true)
+        // router.push(`/play`)
+
       }
-      if(check.amount && check.topic){
+      if (check.amount && check.topic) {
         setAmount(check.amount)
         setTopic(check.topic)
-        setAddJoiner(true)
+        // setAddJoiner(true)  
       }
     }
     checkBetVaidity()
     setIsLoading(false)
-  },[])
+  }, [address])
 
   useEffect(() => {
-   
+    const ValidateUser = async () => {
+      if (result?.isFetched && result.status === 'success' && txHash) {
+        const { msg, userValid } = await userValidity(gameId, address)
+
+        setJoining(false)
+        if (!userValid) {
+          toast({ title: 'Error!', description: msg })
+          return
+        }
+        setAddJoiner(false)
+        toast({ title: 'Joined!', description: msg })
+
+      }
+    }
+    ValidateUser()
+
+  }, [result])
+
+  useEffect(() => {
+
     const timer = setInterval(() => {
       if (gameState.status === "in-progress" && !gameState.submitted) {
         setGameState(prev => {
@@ -100,11 +134,11 @@ export default function GamePage() {
 
   useEffect(() => {
     if (content) {
-      
+
       try {
-        
+
         const questions = content.questions
-        console.log("question",questions);
+        console.log("question", questions);
 
         setGameState(prev => ({
           ...prev,
@@ -121,20 +155,20 @@ export default function GamePage() {
   const handleStartGame = async () => {
     try {
       if (!address) return
-      setIsLoading(true)
+      setGameStarting(true)
       const { msg, content: serverContent } = await startCreatorGame(gameId, address)
 
       if (!serverContent) {
-        setIsLoading(false)
+        setGameStarting(false)
         toast({ title: "Error", description: msg })
         return
       }
 
       setContent(serverContent)
-      setIsLoading(false)
+      setGameStarting(false)
     } catch (error) {
       console.error(error)
-      setIsLoading(false)
+      setGameStarting(false)
       toast({ title: "Error", description: "Failed to start game" })
     }
   }
@@ -162,11 +196,7 @@ export default function GamePage() {
   const handleSubmitAnswers = async () => {
     if (gameState.submitted) return
 
-
-    // const score = gameState.questions.reduce((acc, question, index) => {
-    //   return acc + (gameState.playerAnswers[index] === question.correctIndex ? 1 : 0)
-    // }, 0)
-    const score = await calculateScore(gameState.playerAnswers,gameId,address);
+    const score = await calculateScore(gameState.playerAnswers, gameId, address);
 
 
 
@@ -181,14 +211,26 @@ export default function GamePage() {
     if (!address) return
     setJoining(true)
     try {
-      const { msg } = await userValidity(gameId,address)
-      setJoining(false)
-      setAddJoiner(false)
-      toast({ title: 'Joined!', description: msg })
+      const tx = await writeContractAsync({
+        address: '0x4032E8E21e1c09a9E5910F99dA6454FFae530Bcf',
+        abi: wagmiAbi,
+        functionName: "joinBet",
+        args: [gameId],
+        value: parseEther(amount),
+      });
 
-      
+      toast({
+        title: "Transaction Sent!",
+        description: `Tx Hash: ${tx}`,
+      });
+
+      setTxHash(tx)
+
+
+
+
     } catch (e: any) {
-      toast({ title: 'Join Failed', description: e.message })
+      toast({ title: 'Join Failed', description: e?.message })
     } finally {
       setJoining(false)
     }
@@ -218,8 +260,8 @@ export default function GamePage() {
       </div>
     )
   }
-  if(addJoiner){
-    return(
+  if (addJoiner) {
+    return (
       <div className="container mx-auto p-4 flex justify-center">
         <Card className="w-full max-w-md">
           <CardHeader>
@@ -229,9 +271,8 @@ export default function GamePage() {
             <Label>Game ID</Label>
             <Input readOnly value={gameId} className="font-mono mb-4" />
 
-           
 
-            { (
+            {(
               <>
                 <p className="mb-2">
                   <span className="font-semibold">Topic:</span> {topic}
@@ -239,7 +280,6 @@ export default function GamePage() {
                 <p className="mb-4">
                   <span className="font-semibold">Bet Amount:</span> {amount} ETH
                 </p>
-               
                 {isConnected && (
                   <Button
                     className="w-full"
@@ -269,17 +309,46 @@ export default function GamePage() {
 
   if (gameState.status === "waiting") {
     return (
+
+
+
       <div className="container flex flex-col items-center justify-center min-h-screen px-4">
         <Card className="w-full max-w-md">
-          <CardContent className="pt-6 text-center">
-            <h2 className="text-2xl font-bold mb-4">Game Created! Ready to play?</h2>
+          <CardHeader>
+            <CardTitle>Ready to play?</CardTitle>
+          </CardHeader>
+          <CardContent >
+            <Label>Game ID</Label>
+            <Input readOnly value={gameId} className="font-mono mb-4" />
+
+            {/* <p className="mb-2">
+              <span className="font-semibold">Player:</span> {address}
+            </p> */}
+            <p className="mb-2">
+              <span className="font-semibold">Topic:</span> {topic}
+            </p>
+            <p className="mb-4">
+              <span className="font-semibold">Bet Amount:</span> {amount} ETH
+            </p>
+            {/* <div className="text-xl  mb-4">Game Id: {ad}</div> */}
+
             <Button className="w-full" onClick={handleStartGame}>
-              Start Game
+              {gameStaring ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Starting...
+                </>
+              ) : (
+                "Start Game"
+              )}
             </Button>
           </CardContent>
+          <CardFooter>
+            <Button variant="link" onClick={() => router.push('/play')}>Back</Button>
+          </CardFooter>
         </Card>
-        <Toaster/>
-        
+        <Toaster />
+
       </div>
     )
   }

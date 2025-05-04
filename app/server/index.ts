@@ -4,6 +4,7 @@ import { generateSlug } from "random-word-slugs";
 import Groq from "groq-sdk";
 import { createPublicClient, http, parseEther } from 'viem'
 import { mainnet,sepolia } from 'viem/chains'
+import { wagmiAbi } from "@/utils/Abt";
 
 const client = createPublicClient({
     chain: sepolia, // or sepolia, hardhat, etc.
@@ -25,14 +26,23 @@ export const getUniqueSlug = async () => {
 
     return { msg: "Bet Created Successfully!", slug };
 };
-export async function verifyTransaction(txHash: `0x${string}`, address: `0x${string}`, betAmount: string){
+export async function verifyTransaction(txHash: `0x${string}`, address: `0x${string}`, betAmount: string, slug: string){
     const receipt = await client.getTransactionReceipt({ hash: txHash })
     const tx = await client.getTransaction({ hash: txHash })
+    console.log(tx);
 
     if (!receipt || !tx) return false
     if (tx.from.toLowerCase() !== address.toLowerCase()) return false
     if (tx.to?.toLowerCase() !== CONTRACT_ADDRESS.toLowerCase()) return false
     if (tx.value !== parseEther(betAmount)) return false
+    const data = await client.readContract({
+        address: '0x4032E8E21e1c09a9E5910F99dA6454FFae530Bcf',
+        abi: wagmiAbi,
+        functionName: 'getBet',
+        args: [slug],
+    })
+    console.log(data);
+    return true
 }
 export const createGame = async (betAmount: string, topic: string, slug: string, address: `0x${string}` | undefined, txHash: `0x${string}`) => {
     const prisma = (await import("@/db")).default;
@@ -46,7 +56,7 @@ export const createGame = async (betAmount: string, topic: string, slug: string,
     });
 
     if (!user) return { msg: "Error in creating User", slug: "" };
-    const verify = await verifyTransaction(txHash,address,betAmount)
+    const verify=await verifyTransaction(txHash,address,betAmount,slug)
     if (!verify) return { msg: "Can't Verify this Transaction", slug: "" };
 
     
@@ -131,16 +141,16 @@ export const isBetValid = async (slug: string, address: `0x${string}` | undefine
     }
 
     if (bet.creatorId !== address && !bet.joinerId) {
-        return { msg: `You can join the bet by paying ${bet.amount}`, isValid: true, amount: bet.amount, topic: bet.topic };
+        return { msg: `You can join the bet by paying ${bet.amount}`, isValid: false, amount: bet.amount, topic: bet.topic };
     }
 
-    return { msg: "You can play game", isValid: true };
+    return { msg: "You can play game", isValid: true, amount: bet.amount, topic: bet.topic };
 };
 
 export const userValidity = async (slug: string, address: `0x${string}` | undefined) => {
     const prisma = (await import("@/db")).default;
 
-    if (!address) return { msg: "address is empty", slug: "" };
+    if (!address) return { msg: "address is empty", userValid: false };
 
     const user = await prisma.user.upsert({
         where: { address },
@@ -148,16 +158,16 @@ export const userValidity = async (slug: string, address: `0x${string}` | undefi
         create: { address }
     });
 
-    if (!user) return { msg: "Error in creating User" };
+    if (!user) return { msg: "Error in creating User", userValid :false};
 
     const bet = await prisma.bet.update({
         where: { slug },
         data: { joinerId: address }
     });
 
-    if (!bet) return { msg: "Error in updating Bet" };
+    if (!bet) return { msg: "Error in updating Bet",userValid: false };
 
-    return { msg: "Bet Joined Successfully!" };
+    return { msg: "Bet Joined Successfully!", userValid: true };
 };
 
 export const calculateScore = async (answers: (number | null)[], slug: string, address: `0x${string}` | undefined) => {

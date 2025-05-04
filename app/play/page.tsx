@@ -28,18 +28,13 @@ export default function PlayPage() {
   const [creating, setCreating] = useState(false)
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null)
   const [slugRef, setSlugRef] = useState("")
-
   const [loading, setloading] = useState(true);
   const { isConnected, address } = useAccount()
-  const { writeContractAsync, isSuccess } = useWriteContract()
+  const { writeContractAsync } = useWriteContract()
   const balance = useBalance({
     address
   })
-  // const { data: hash, sendTransaction,isPending } = useSendTransaction()
-  // const { isLoading: isConfirming, isSuccess: isConfirmed } =
-  //   useWaitForTransactionReceipt({
-  //     hash,
-  //   })
+
 
   const result = useWaitForTransactionReceipt({
     hash: txHash || "0x",
@@ -55,16 +50,21 @@ export default function PlayPage() {
   }, [])
 
   useEffect(() => {
-     const  TransferToPlay=async()=>{
-       if (result?.isFetched && result.status === 'success' && txHash) {
-         await createGame(betAmount,topic,slugRef,address,txHash)
-          console.log("Transaction confirmed ✅")
-         router.push(`/game/${slugRef}`)
-       }
-     }
+    const TransferToPlay = async () => {
+      if (result?.isFetched && result.status === 'success' && txHash) {
+        await createGame(betAmount, topic, slugRef, address, txHash)
+        toast({
+          title: "Transaction confirmed ✅",
+          description: "You can now Play game"
+        })
+        console.log("Transaction confirmed ✅")
+        setCreating(false)
+        router.push(`/game/${slugRef}`)
+      }
+    }
     TransferToPlay()
-    
-  }, [result.isFetched, result.status])
+
+  }, [result])
 
   const handleCreateGame = async () => {
 
@@ -85,9 +85,6 @@ export default function PlayPage() {
 
     }
 
-
-    // sendTransaction({ to: '0xF1C7fCfdf0e55ed652EFcF3C7bAE5C6D88D7E88E', value:parseEther(betAmount)})
-    // 0x4032E8E21e1c09a9E5910F99dA6454FFae530Bcf
     try {
 
       setCreating(true)
@@ -119,13 +116,6 @@ export default function PlayPage() {
 
       setTxHash(tx)
 
-      const result = useWaitForTransactionReceipt({
-        hash: tx,
-      })
-
-      console.log(result);
-
-      router.push(`/game/${slug}`)
     } catch (error) {
       console.log(error);
       toast({
