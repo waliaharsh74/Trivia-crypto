@@ -7,8 +7,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Progress } from "@/components/ui/progress"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
-import { Loader2, Trophy, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react"
-import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi"
+import { Loader2, Trophy, ChevronLeft, ChevronRight } from "lucide-react"
+import { useAccount, useBalance, useWaitForTransactionReceipt, useWriteContract } from "wagmi"
 import { WalletMultiButton } from "@/components/wallet-multi-button"
 
 import { calculateScore, isBetValid, startCreatorGame, userValidity } from "@/app/server"
@@ -17,6 +17,8 @@ import { Toaster } from "@/components/ui/toaster"
 import { Input } from "@/components/ui/input"
 import { wagmiAbi } from "@/utils/Abt"
 import { parseEther } from "viem"
+const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS! as `0x${string}`
+
 
 
 interface Question {
@@ -61,28 +63,36 @@ export default function GamePage() {
   const [amount, setAmount] = useState('')
   const [topic, setTopic] = useState('')
   const [joining, setJoining] = useState(false)
+  const [betValid, setBetValid] = useState(true)
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null)
+  const [oneTimeSubmitted,setOneTimeSubmitted]=useState(false)
   const { writeContractAsync } = useWriteContract()
   const result = useWaitForTransactionReceipt({
-    hash: txHash || "0x",
+    hash: txHash!,
     query: {
       enabled: !!txHash,
     },
     confirmations: 1,
   })
+  const balance = useBalance({
+      address
+    })
 
 
   useEffect(() => {
+    // console.log('contractAddress', contractAddress);
     setIsLoading(true)
     async function checkBetVaidity() {
       if (!address) return
       const check = await isBetValid(gameId, address);
+      
+      setBetValid(check.isValid)
       if (!check.isValid) {
         toast({
           description: check.msg,
-          title: "Error!"
+          title: "Message"
         })
-        setAddJoiner(true)
+        
         // router.push(`/play`)
 
       }
@@ -91,29 +101,36 @@ export default function GamePage() {
         setTopic(check.topic)
         // setAddJoiner(true)  
       }
+      console.log(check.bet);
+      if(check?.bet && !check?.bet?.joinerId){
+        
+        setAddJoiner(true)
+      }
+      setIsLoading(false)
     }
     checkBetVaidity()
-    setIsLoading(false)
+    
   }, [address])
 
   useEffect(() => {
     const ValidateUser = async () => {
       if (result?.isFetched && result.status === 'success' && txHash) {
-        const { msg, userValid } = await userValidity(gameId, address)
+        const { msg, userValid } = await userValidity(gameId, address,txHash,amount)
 
-        setJoining(false)
+        
         if (!userValid) {
           toast({ title: 'Error!', description: msg })
           return
         }
         setAddJoiner(false)
+        setJoining(false)
         toast({ title: 'Joined!', description: msg })
 
       }
     }
     ValidateUser()
 
-  }, [result])
+  }, [result.isFetched,result.status])
 
   useEffect(() => {
 
@@ -194,9 +211,26 @@ export default function GamePage() {
   }
 
   const handleSubmitAnswers = async () => {
+    try {
+      
+    
     if (gameState.submitted) return
+    setOneTimeSubmitted(true)
+    setGameState(prev => ({
+      ...prev,
+      submitted: true
+    }))
 
-    const score = await calculateScore(gameState.playerAnswers, gameId, address);
+    const {score,sig} = await calculateScore(gameState.playerAnswers, gameId, address);
+    console.log("score", score);
+    console.log("sig", sig);
+    const result =await writeContractAsync({
+      address: contractAddress,
+      abi: wagmiAbi,
+      functionName: 'submitScoreSigned',
+      args: [gameId, score, sig],
+    });
+    console.log("resultsign->",result);
 
 
 
@@ -206,13 +240,34 @@ export default function GamePage() {
       status: "completed",
       submitted: true
     }))
+    router.push(`winner/${gameId}`)
+    } catch (error:any) {
+      console.log(error);
+      toast({
+        title:"Erro!",
+        description:error?.message || "error in submitting answers"
+      })
+    }
   }
+
+
   const handleJoin = async () => {
     if (!address) return
+    console.log(balance?.data?.formatted);
+    if (!balance || balance.data && balance?.data?.formatted <= amount) {
+      toast({
+        title: "Insufficent Balance!",
+        description: `Require more than ${amount} Eth`
+      })
+      return
+
+    }
     setJoining(true)
+    console.log("object");
+
     try {
       const tx = await writeContractAsync({
-        address: '0x4032E8E21e1c09a9E5910F99dA6454FFae530Bcf',
+        address: contractAddress,
         abi: wagmiAbi,
         functionName: "joinBet",
         args: [gameId],
@@ -221,19 +276,25 @@ export default function GamePage() {
 
       toast({
         title: "Transaction Sent!",
-        description: `Tx Hash: ${tx}`,
+        description: (
+          <a target="_blank" href={`https://sepolia.etherscan.io/tx/${tx}`}>
+            View on Etherscan
+          </a>
+        )
       });
 
       setTxHash(tx)
+      
 
 
 
 
     } catch (e: any) {
+      console.log(e);
       toast({ title: 'Join Failed', description: e?.message })
-    } finally {
       setJoining(false)
-    }
+
+    } 
   }
 
   if (isLoading) {
@@ -284,9 +345,9 @@ export default function GamePage() {
                   <Button
                     className="w-full"
                     onClick={handleJoin}
-                    disabled={joining}
+                    disabled={joining  }
                   >
-                    {joining ? (
+                    {joining  ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Joining...
@@ -303,6 +364,7 @@ export default function GamePage() {
             <Button variant="link" onClick={() => router.push('/play')}>Back</Button>
           </CardFooter>
         </Card>
+        <Toaster />
       </div>
     )
   }
@@ -332,7 +394,7 @@ export default function GamePage() {
             </p>
             {/* <div className="text-xl  mb-4">Game Id: {ad}</div> */}
 
-            <Button className="w-full" onClick={handleStartGame}>
+            <Button className="w-full" onClick={handleStartGame} disabled={!betValid}>
               {gameStaring ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -366,6 +428,7 @@ export default function GamePage() {
             </div>
           </CardContent>
         </Card>
+        <Toaster />
       </div>
     )
   }
@@ -439,7 +502,7 @@ export default function GamePage() {
         <Button
           className="w-full mt-4"
           onClick={handleSubmitAnswers}
-          disabled={gameState.playerAnswers.some(a => a === null)}
+          disabled={gameState.playerAnswers.some(a => a === null) ||oneTimeSubmitted}
         >
           Submit Answers
         </Button>

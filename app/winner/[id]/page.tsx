@@ -53,7 +53,7 @@ export default function Winner(){
               description:check.msg,
               title:"Error!"
             })
-            router.push(`/play`)
+            // router.push(`/play`)
            
           }
           
@@ -74,7 +74,7 @@ export default function Winner(){
     return (
       <div className="container flex flex-col items-center justify-center min-h-screen px-4">
         <AlertCircle className="w-12 h-12 text-red-500" />
-        <p className="mt-4 text-lg">{error || "Unknown error"}</p>
+        <p className="mt-4 text-lg">{error || "Bet Not Found"}</p>
         <Button variant="link" onClick={() => router.push("/play")}>
           <ChevronLeft className="mr-2" /> Back
         </Button>

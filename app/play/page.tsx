@@ -34,6 +34,8 @@ export default function PlayPage() {
   const balance = useBalance({
     address
   })
+  const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS! as `0x${string}`
+
 
 
   const result = useWaitForTransactionReceipt({
@@ -51,20 +53,27 @@ export default function PlayPage() {
 
   useEffect(() => {
     const TransferToPlay = async () => {
-      if (result?.isFetched && result.status === 'success' && txHash) {
-        await createGame(betAmount, topic, slugRef, address, txHash)
-        toast({
-          title: "Transaction confirmed ✅",
-          description: "You can now Play game"
-        })
-        console.log("Transaction confirmed ✅")
-        setCreating(false)
-        router.push(`/game/${slugRef}`)
+      try {
+        if (result?.isFetched && result.status === 'success' && txHash) {
+          const result = await createGame(betAmount, topic, slugRef, address, txHash)
+          console.log(result);
+          toast({
+            title: "Transaction confirmed ✅",
+            description: "redirecting you to game"
+          })
+          console.log("Transaction confirmed ✅")
+          router.push(`/game/${slugRef}`)
+          setCreating(false)
+        }
+        
+      } catch (error) {
+        console.log(error);
       }
+      
     }
     TransferToPlay()
 
-  }, [result])
+  }, [result.isFetched,result.status])
 
   const handleCreateGame = async () => {
 
@@ -102,7 +111,7 @@ export default function PlayPage() {
       setSlugRef(slug)
 
       const tx = await writeContractAsync({
-        address: '0x4032E8E21e1c09a9E5910F99dA6454FFae530Bcf',
+        address: contractAddress,
         abi: wagmiAbi,
         functionName: "createBet",
         args: [slug, topic],
@@ -111,7 +120,11 @@ export default function PlayPage() {
 
       toast({
         title: "Transaction Sent!",
-        description: `Tx Hash: ${tx}`,
+        description: (
+          <a target="_blank" href={`https://sepolia.etherscan.io/tx/${tx}`}>
+            View on Etherscan
+          </a>
+        )
       });
 
       setTxHash(tx)

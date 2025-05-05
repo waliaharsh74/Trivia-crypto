@@ -3,18 +3,26 @@
 import { generateSlug } from "random-word-slugs";
 import Groq from "groq-sdk";
 import { createPublicClient, http, parseEther } from 'viem'
-import { mainnet,sepolia } from 'viem/chains'
+import { sepolia } from 'viem/chains'
 import { wagmiAbi } from "@/utils/Abt";
+import { keccak256, concatHex, encodePacked, toBytes } from 'viem'
+import { privateKeyToAccount } from 'viem/accounts'
 
 const client = createPublicClient({
-    chain: sepolia, // or sepolia, hardhat, etc.
+    chain: sepolia, 
     transport: http()
 })
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+const ORACLE_PK = process.env.ORACLE_PK! as `0x${string}`
+const oracle = privateKeyToAccount(ORACLE_PK)
+const SCORE_TYPEHASH = keccak256(
+    toBytes("Score(bytes32 slugHash,address player,uint8 score)")
+)
 
-const CONTRACT_ADDRESS ='0x4032E8E21e1c09a9E5910F99dA6454FFae530Bcf'
+
+const CONTRACT_ADDRESS ='0xa44708ddb0ecc3b8d9eaf3538aae11926ae5dc2e'
 export const getUniqueSlug = async () => {
     const prisma = (await import("@/db")).default;
 
@@ -29,14 +37,14 @@ export const getUniqueSlug = async () => {
 export async function verifyTransaction(txHash: `0x${string}`, address: `0x${string}`, betAmount: string, slug: string){
     const receipt = await client.getTransactionReceipt({ hash: txHash })
     const tx = await client.getTransaction({ hash: txHash })
-    console.log(tx);
+   
 
     if (!receipt || !tx) return false
     if (tx.from.toLowerCase() !== address.toLowerCase()) return false
     if (tx.to?.toLowerCase() !== CONTRACT_ADDRESS.toLowerCase()) return false
     if (tx.value !== parseEther(betAmount)) return false
     const data = await client.readContract({
-        address: '0x4032E8E21e1c09a9E5910F99dA6454FFae530Bcf',
+        address: CONTRACT_ADDRESS,
         abi: wagmiAbi,
         functionName: 'getBet',
         args: [slug],
@@ -61,7 +69,6 @@ export const createGame = async (betAmount: string, topic: string, slug: string,
 
     
 
-    // const slug = generateSlug();
     const bet = await prisma.bet.create({
         data: { slug, creatorId: address, amount: betAmount, topic }
     });
@@ -72,43 +79,58 @@ export const createGame = async (betAmount: string, topic: string, slug: string,
 };
 
 export const startCreatorGame = async (slug: string, address: `0x${string}` | undefined) => {
+    try {
     const prisma = (await import("@/db")).default;
-
+    const data = await client.readContract({
+        address: CONTRACT_ADDRESS,
+        abi: wagmiAbi,
+        functionName: 'getBet',
+        args: [slug],
+    }) as Bet
+    
     const bet = await prisma.bet.findFirst({ where: { slug } });
-    if (!bet) return { msg: "Oops No bet exists for this Game Id", content: null };
+    if (!bet || !data) return { msg: "Oops No bet exists for this Game Id", content: null };
 
-    if ((bet.creatorId !== address) && (bet?.joinerId !== address)) {
+        if ((bet.creatorId !== address || data.creator !== address) && (bet?.joinerId !== address || data.joiner !== address)) {
         return { msg: "You are not authorized for this bet", content: null };
     }
 
-    if ((bet.creatorId === address && bet.creatorCompleted) || (bet?.joinerId === address && bet.joinerCompleted)) {
+        if (((bet.creatorId === address && bet.creatorCompleted)|| 
+            (data.creator == address && data.creatorCompleted)) || 
+            ((bet?.joinerId === address && bet.joinerCompleted) ||
+            (data.joiner==address && data.joinerCompleted))) {
         return { msg: "You have already completed this bet!", content: null };
     }
+    console.log("confirm");
 
     const chatCompletion = await getGroqChatCompletion(bet.topic);
     const raw = chatCompletion.choices[0]?.message?.content || '';
-
+    
+    // console.log("raw",raw);
     const jsonString = raw.trim().replace(/^```json\s*/, '').replace(/\s*```$/, '');
+        // console.log("jsonst", jsonString);
 
     const allQuestions = await prisma.question.findMany({ where: { slug } });
-    if (allQuestions.length !== 0) {
+    if (allQuestions.length != 0) {
         const stripped = allQuestions.map(({ question, options }) => ({ question, options }));
         return { msg: 'success', content: { questions: stripped } };
     }
 
-    try {
+    
         const parsed = JSON.parse(jsonString);
-        const allPromises = parsed.questions.map((item:Question) =>
+        
+        const allPromises = parsed?.map((item:Question) =>
             prisma.question.create({
                 data: { question: item.question, correctIndex: item.correctIndex, options: item.options, slug }
             })
         );
+        console.log("allPromises",allPromises);
         await Promise.all(allPromises);
 
-        const stripped = parsed.questions.map(({ question, options }: { question: string; options: string[] }) => ({ question, options }));
+        const stripped = parsed?.map(({ question, options }: { question: string; options: string[] }) => ({ question, options }));
         return { msg: 'success', content: { questions: stripped } };
     } catch (err) {
-        console.error('Failed to parse LLM JSON:', err, raw);
+        console.log('Failed to start game ', err);
         return { msg: 'Failed to parse quiz content', content: null };
     }
 };
@@ -119,7 +141,7 @@ export async function getGroqChatCompletion(topic: string) {
             {
                 role: "user",
                 content: `Generate 15 multiple-choice questions (MCQs) about ${topic} for a trivia quiz. Follow these rules:
-                1. Format: Strictly use JSON format with keys: questions, question, options, correctIndex.
+                1. Format: Strictly use JSON format with keys: questionNo, question, options, correctIndex.
                 2. Difficulty: Suitable for adults with general knowledge.
                 3. Options: 4 per question, 1 correct. Distractors must be plausible.
                 4. Sub-topics: Include physics, chemistry, biology, and astronomy.
@@ -141,13 +163,13 @@ export const isBetValid = async (slug: string, address: `0x${string}` | undefine
     }
 
     if (bet.creatorId !== address && !bet.joinerId) {
-        return { msg: `You can join the bet by paying ${bet.amount}`, isValid: false, amount: bet.amount, topic: bet.topic };
+        return { msg: `You can join the bet by paying ${bet.amount} Eth`, isValid: true, amount: bet.amount, topic: bet.topic,bet };
     }
 
-    return { msg: "You can play game", isValid: true, amount: bet.amount, topic: bet.topic };
+    return { msg: "You can play game", isValid: true, amount: bet.amount, topic: bet.topic,bet };
 };
 
-export const userValidity = async (slug: string, address: `0x${string}` | undefined) => {
+export const userValidity = async (slug: string, address: `0x${string}` | undefined, txHash: `0x${string}`,betAmount:string) => {
     const prisma = (await import("@/db")).default;
 
     if (!address) return { msg: "address is empty", userValid: false };
@@ -159,6 +181,9 @@ export const userValidity = async (slug: string, address: `0x${string}` | undefi
     });
 
     if (!user) return { msg: "Error in creating User", userValid :false};
+
+    const verify = await verifyTransaction(txHash, address, betAmount, slug)
+    if (!verify) return { msg: "Can't Verify this Transaction", slug: "" };
 
     const bet = await prisma.bet.update({
         where: { slug },
@@ -172,29 +197,47 @@ export const userValidity = async (slug: string, address: `0x${string}` | undefi
 
 export const calculateScore = async (answers: (number | null)[], slug: string, address: `0x${string}` | undefined) => {
     const prisma = (await import("@/db")).default;
-
-    if (answers.length === 0 || !address || !slug) return 0;
+    // const sig = 0
+    if (answers.length === 0 || !address || !slug) return {score:0,sig:`0x`};
 
     const questionWithAnswers = await prisma.question.findMany({ where: { slug } });
     const bet = await prisma.bet.findFirst({ where: { slug } });
+    if (!bet) return { score: 0, sig: `0x` };
 
     const score = questionWithAnswers.reduce((acc, question, index) => {
         return acc + (answers[index] === question.correctIndex ? 1 : 0);
     }, 0);
 
     if (bet?.creatorId === address) {
+        if (bet.creatorCompleted) return { score: bet?.cretorScore ||0, sig: `0x` };
         await prisma.bet.update({
             where: { slug },
             data: { creatorCompleted: true, cretorScore: score }
         });
     } else {
+        if (bet?.joinerCompleted) return { score: bet?.joinerScore || 0, sig: `0x` };
+
         await prisma.bet.update({
             where: { slug },
             data: { joinerCompleted: true, joinerScore: score }
         });
     }
+    const slugHash = keccak256(encodePacked(['string'], [slug]))
+    const structHash = keccak256(encodePacked(
+        ['bytes32', 'address', 'uint8'],
+        [slugHash, address, score]
+    ))
 
-    return score;
+    const digest = keccak256(concatHex(['0x1901', SCORE_TYPEHASH, structHash]))
+
+    
+    const sig = await oracle.signMessage({ message:{ raw:digest} })
+    
+
+    return {
+        score,
+        sig
+    }
 };
 
 export const CheckWinner = async (slug: string) => {
@@ -213,7 +256,20 @@ export const CheckWinner = async (slug: string) => {
 };
 
 interface Question {
+    questions:number
     question: string;
     options: string[];
     correctIndex: number;
 }
+type Bet = {
+    topic: string;
+    amount: bigint;
+    creator: `0x${string}`;
+    joiner: `0x${string}`;
+    creatorCompleted: boolean;
+    joinerCompleted: boolean;
+    creatorScore: number;
+    joinerScore: number;
+    winner: `0x${string}`;
+};
+

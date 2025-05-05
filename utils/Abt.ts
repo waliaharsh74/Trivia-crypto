@@ -1,14 +1,46 @@
-export const wagmiAbi =[
+export const wagmiAbi = [
     {
         "inputs": [
             {
                 "internalType": "address",
                 "name": "_feeRecipient",
                 "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "_scoreOracle",
+                "type": "address"
             }
         ],
         "stateMutability": "nonpayable",
         "type": "constructor"
+    },
+    {
+        "inputs": [],
+        "name": "ECDSAInvalidSignature",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "length",
+                "type": "uint256"
+            }
+        ],
+        "name": "ECDSAInvalidSignatureLength",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "s",
+                "type": "bytes32"
+            }
+        ],
+        "name": "ECDSAInvalidSignatureS",
+        "type": "error"
     },
     {
         "anonymous": false,
@@ -86,6 +118,50 @@ export const wagmiAbi =[
         "type": "event"
     },
     {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "slug",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "topic",
+                "type": "string"
+            }
+        ],
+        "name": "createBet",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "slug",
+                "type": "string"
+            }
+        ],
+        "name": "joinBet",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "slug",
+                "type": "string"
+            }
+        ],
+        "name": "resolve",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
         "anonymous": false,
         "inputs": [
             {
@@ -111,6 +187,29 @@ export const wagmiAbi =[
         "type": "event"
     },
     {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "slug",
+                "type": "string"
+            },
+            {
+                "internalType": "uint8",
+                "name": "score",
+                "type": "uint8"
+            },
+            {
+                "internalType": "bytes",
+                "name": "sig",
+                "type": "bytes"
+            }
+        ],
+        "name": "submitScoreSigned",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
         "inputs": [],
         "name": "FEE_BPS",
         "outputs": [
@@ -121,24 +220,6 @@ export const wagmiAbi =[
             }
         ],
         "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "slug",
-                "type": "string"
-            },
-            {
-                "internalType": "string",
-                "name": "topic",
-                "type": "string"
-            }
-        ],
-        "name": "createBet",
-        "outputs": [],
-        "stateMutability": "payable",
         "type": "function"
     },
     {
@@ -221,47 +302,16 @@ export const wagmiAbi =[
         "type": "function"
     },
     {
-        "inputs": [
+        "inputs": [],
+        "name": "scoreOracle",
+        "outputs": [
             {
-                "internalType": "string",
-                "name": "slug",
-                "type": "string"
+                "internalType": "address",
+                "name": "",
+                "type": "address"
             }
         ],
-        "name": "joinBet",
-        "outputs": [],
-        "stateMutability": "payable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "slug",
-                "type": "string"
-            }
-        ],
-        "name": "resolve",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "slug",
-                "type": "string"
-            },
-            {
-                "internalType": "uint8",
-                "name": "score",
-                "type": "uint8"
-            }
-        ],
-        "name": "submitScore",
-        "outputs": [],
-        "stateMutability": "nonpayable",
+        "stateMutability": "view",
         "type": "function"
     }
 ]
