@@ -1,7 +1,8 @@
 {
     "build": {
         "env": {
-            "NODE_OPTIONS": "--trace-warnings"
+            "NODE_OPTIONS": "--trace-warnings",
+            "PRISMA_GENERATE_SKIP_AUTOINSTALL": "1"
         }
     }
 }
