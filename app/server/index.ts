@@ -6,6 +6,8 @@ import { createPublicClient, http, parseEther } from 'viem'
 import { sepolia } from 'viem/chains'
 import { wagmiAbi } from "@/utils/Abt";
 import { keccak256, toBytes } from 'viem'
+import prisma from "@/db"
+
 
 import { ethers } from "ethers";
 
@@ -24,7 +26,7 @@ const oracle = new ethers.Wallet(ORACLE_PK, provider);
 const CONTRACT_ADDRESS ='0x0be41344a98b13a8537577f4537de3c48a36ba85'
 const trivia = new ethers.Contract(CONTRACT_ADDRESS, wagmiAbi, oracle);
 export const getUniqueSlug = async () => {
-    const prisma = (await import("@/db")).default;
+    // 
 
     let slug = generateSlug();
     while((await prisma.bet.findFirst({where:{slug}})))
@@ -53,7 +55,7 @@ export async function verifyTransaction(txHash: `0x${string}`, address: `0x${str
     return true
 }
 export const createGame = async (betAmount: string, topic: string, slug: string, address: `0x${string}` | undefined, txHash: `0x${string}`) => {
-    const prisma = (await import("@/db")).default;
+    
 
     if (!address) return { msg: "address is empty", slug: "" };
 
@@ -80,7 +82,7 @@ export const createGame = async (betAmount: string, topic: string, slug: string,
 
 export const startCreatorGame = async (slug: string, address: `0x${string}` | undefined) => {
     try {
-    const prisma = (await import("@/db")).default;
+    
     const data = await client.readContract({
         address: CONTRACT_ADDRESS,
         abi: wagmiAbi,
@@ -153,7 +155,7 @@ export async function getGroqChatCompletion(topic: string) {
 }
 
 export const isBetValid = async (slug: string, address: `0x${string}` | undefined) => {
-    const prisma = (await import("@/db")).default;
+    
 
     const bet = await prisma.bet.findFirst({ where: { slug } });
     if (!bet) return { msg: `Oops No bet exists for Game ID: ${slug}`, isValid: false };
@@ -170,7 +172,7 @@ export const isBetValid = async (slug: string, address: `0x${string}` | undefine
 };
 
 export const userValidity = async (slug: string, address: `0x${string}` | undefined, txHash: `0x${string}`,betAmount:string) => {
-    const prisma = (await import("@/db")).default;
+    
 
     if (!address) return { msg: "address is empty", userValid: false };
 
@@ -196,7 +198,7 @@ export const userValidity = async (slug: string, address: `0x${string}` | undefi
 };
 
 export const calculateScore = async (answers: (number | null)[], slug: string, address: `0x${string}` | undefined) => {
-    const prisma = (await import("@/db")).default;
+    
     // const sig = 0
     if (answers.length === 0 || !address || !slug) return {score:0};
 
@@ -237,7 +239,7 @@ export const calculateScore = async (answers: (number | null)[], slug: string, a
 };
 
 export const CheckWinner = async (slug: string) => {
-    const prisma = (await import("@/db")).default;
+    
 
     const bet = await prisma.bet.findFirst({ where: { slug } });
     if (!bet) {
