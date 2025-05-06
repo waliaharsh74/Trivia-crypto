@@ -1,7 +1,7 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { WalletMultiButton } from "@/components/wallet-multi-button"
+
 
 
 
@@ -9,16 +9,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* <header className="border-b">
-        <div className="container flex items-center justify-between h-16 px-4 md:px-6">
-          <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
-            <span className="text-primary">CryptoTrivia</span>
-          
-          </Link>
-        
-          <WalletMultiButton />
-        </div>
-      </header> */}
+     
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">

@@ -25,7 +25,6 @@ export default function RootLayout({
                 <span className="text-primary">CryptoTrivia</span>
 
               </Link>
-              {/* <WalletOptions /> */}
               <WalletMultiButton />
             </div>
           </header>

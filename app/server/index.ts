@@ -5,8 +5,9 @@ import Groq from "groq-sdk";
 import { createPublicClient, http, parseEther } from 'viem'
 import { sepolia } from 'viem/chains'
 import { wagmiAbi } from "@/utils/Abt";
-import { keccak256, concatHex, encodePacked, toBytes } from 'viem'
-import { privateKeyToAccount } from 'viem/accounts'
+import { keccak256, toBytes } from 'viem'
+
+import { ethers } from "ethers";
 
 const client = createPublicClient({
     chain: sepolia, 
@@ -14,15 +15,14 @@ const client = createPublicClient({
 })
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
+const RPC = process.env.RPC_URL!;
 const ORACLE_PK = process.env.ORACLE_PK! as `0x${string}`
-const oracle = privateKeyToAccount(ORACLE_PK)
-const SCORE_TYPEHASH = keccak256(
-    toBytes("Score(bytes32 slugHash,address player,uint8 score)")
-)
 
+const provider = new ethers.JsonRpcProvider(RPC);
+const oracle = new ethers.Wallet(ORACLE_PK, provider);
 
-const CONTRACT_ADDRESS ='0xa44708ddb0ecc3b8d9eaf3538aae11926ae5dc2e'
+const CONTRACT_ADDRESS ='0x0be41344a98b13a8537577f4537de3c48a36ba85'
+const trivia = new ethers.Contract(CONTRACT_ADDRESS, wagmiAbi, oracle);
 export const getUniqueSlug = async () => {
     const prisma = (await import("@/db")).default;
 
@@ -198,7 +198,7 @@ export const userValidity = async (slug: string, address: `0x${string}` | undefi
 export const calculateScore = async (answers: (number | null)[], slug: string, address: `0x${string}` | undefined) => {
     const prisma = (await import("@/db")).default;
     // const sig = 0
-    if (answers.length === 0 || !address || !slug) return {score:0,sig:`0x`};
+    if (answers.length === 0 || !address || !slug) return {score:0};
 
     const questionWithAnswers = await prisma.question.findMany({ where: { slug } });
     const bet = await prisma.bet.findFirst({ where: { slug } });
@@ -209,34 +209,30 @@ export const calculateScore = async (answers: (number | null)[], slug: string, a
     }, 0);
 
     if (bet?.creatorId === address) {
-        if (bet.creatorCompleted) return { score: bet?.cretorScore ||0, sig: `0x` };
+        if (bet.creatorCompleted) return { score: bet?.cretorScore ||0 };
         await prisma.bet.update({
             where: { slug },
             data: { creatorCompleted: true, cretorScore: score }
         });
+        const tx = await trivia.submitScore(slug, address, score);
+        console.log("score tx:", tx.hash);
+        await tx.wait(1);  
     } else {
-        if (bet?.joinerCompleted) return { score: bet?.joinerScore || 0, sig: `0x` };
+        if (bet?.joinerCompleted) return { score: bet?.joinerScore || 0 };
 
         await prisma.bet.update({
             where: { slug },
             data: { joinerCompleted: true, joinerScore: score }
         });
     }
-    const slugHash = keccak256(encodePacked(['string'], [slug]))
-    const structHash = keccak256(encodePacked(
-        ['bytes32', 'address', 'uint8'],
-        [slugHash, address, score]
-    ))
+  
 
-    const digest = keccak256(concatHex(['0x1901', SCORE_TYPEHASH, structHash]))
-
-    
-    const sig = await oracle.signMessage({ message:{ raw:digest} })
+   
     
 
     return {
         score,
-        sig
+       
     }
 };
 

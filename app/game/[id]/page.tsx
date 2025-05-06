@@ -102,7 +102,7 @@ export default function GamePage() {
         // setAddJoiner(true)  
       }
       console.log(check.bet);
-      if(check?.bet && !check?.bet?.joinerId){
+      if(check?.bet && !check?.bet?.joinerId && check.bet.creatorId!=address){
         
         setAddJoiner(true)
       }
@@ -221,16 +221,9 @@ export default function GamePage() {
       submitted: true
     }))
 
-    const {score,sig} = await calculateScore(gameState.playerAnswers, gameId, address);
-    console.log("score", score);
-    console.log("sig", sig);
-    const result =await writeContractAsync({
-      address: contractAddress,
-      abi: wagmiAbi,
-      functionName: 'submitScoreSigned',
-      args: [gameId, score, sig],
-    });
-    console.log("resultsign->",result);
+    const {score} = await calculateScore(gameState.playerAnswers, gameId, address);
+  
+  
 
 
 
@@ -240,7 +233,7 @@ export default function GamePage() {
       status: "completed",
       submitted: true
     }))
-    router.push(`winner/${gameId}`)
+    // router.push(`winner/${gameId}`)
     } catch (error:any) {
       console.log(error);
       toast({

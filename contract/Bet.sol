@@ -84,48 +84,30 @@ contract CryptoTriviaBet {
         emit BetJoined(slug, msg.sender);
     }
 
-    
-    function submitScoreSigned(
-        string calldata slug,
-        uint8 score,
-        bytes calldata sig
-    ) external betExists(slug) {
-        Bet storage b = bets[_slugHash(slug)];
+   function submitScore(
+    string  calldata slug,
+    address         player,
+    uint8           score
+) external betExists(slug) {
+    require(msg.sender == scoreOracle, "Only oracle");
 
-        require(
-            msg.sender == b.creator || msg.sender == b.joiner,
-            "Bet: not a participant"
-        );
-        require(score <= 15, "Bet: max 15 questions");
+    Bet storage b = bets[_slugHash(slug)];
 
+    require(player == b.creator || player == b.joiner, "Not participant");
+    require(score  <= 15, "Max score 15");
 
-        bytes32 digest = keccak256(
-            abi.encodePacked(
-                "\x19\x01",
-                SCORE_TYPEHASH,
-                keccak256(abi.encode(_slugHash(slug), msg.sender, score))
-            )
-        );
-
-
-        require(
-            ECDSA.recover(digest, sig) == scoreOracle,
-            "Bet: bad oracle sig"
-        );
-
-       
-        if (msg.sender == b.creator) {
-            require(!b.creatorCompleted, "creator already scored");
-            b.creatorScore = score;
-            b.creatorCompleted = true;
-        } else {
-            require(!b.joinerCompleted, "joiner already scored");
-            b.joinerScore = score;
-            b.joinerCompleted = true;
-        }
-
-        emit ScoreSubmitted(slug, msg.sender, score);
+    if (player == b.creator) {
+        require(!b.creatorCompleted, "Creator already scored");
+        b.creatorScore     = score;
+        b.creatorCompleted = true;
+    } else {
+        require(!b.joinerCompleted, "Joiner already scored");
+        b.joinerScore      = score;
+        b.joinerCompleted  = true;
     }
+
+    emit ScoreSubmitted(slug, player, score);
+}
 
     function resolve(string calldata slug) external betExists(slug) {
         Bet storage b = bets[_slugHash(slug)];

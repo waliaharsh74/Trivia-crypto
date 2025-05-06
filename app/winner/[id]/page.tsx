@@ -3,18 +3,16 @@
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+
 import { Loader2, Trophy, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react"
 import { useAccount } from "wagmi"
-import { WalletMultiButton } from "@/components/wallet-multi-button"
+
 
 import { CheckWinner, isBetValid } from "@/app/server"
 import { toast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { Input } from "@/components/ui/input"
+
 
 
 type WinnerData = {
@@ -24,8 +22,8 @@ type WinnerData = {
   joinerScore: number | null;
   winner: string | null;
 };
-export default function Winner(){
- const router = useRouter()
+export default function Winner() {
+  const router = useRouter()
   const params = useParams()
   const [isLoading, setIsLoading] = useState(true)
   const { isConnected, address } = useAccount()
@@ -35,30 +33,30 @@ export default function Winner(){
   useEffect(() => {
     async function fetchWinner() {
       try {
-         const { msg, creatorScore, joinerScore, winner } = await CheckWinner(gameId);
-        
+        const { msg, creatorScore, joinerScore, winner } = await CheckWinner(gameId);
+
         setData({ msg, creatorScore, joinerScore, winner });
-       
+
       } catch (err: any) {
         setError(err.message);
       } finally {
         setIsLoading(false);
       }
     }
-     async function checkBetVaidity(){
-    
-          const check = await isBetValid(gameId,address);
-          if (!check.isValid){
-            toast({
-              description:check.msg,
-              title:"Error!"
-            })
-            // router.push(`/play`)
-           
-          }
-          
-        }
-        checkBetVaidity()
+    async function checkBetVaidity() {
+
+      const check = await isBetValid(gameId, address);
+      if (!check.isValid) {
+        toast({
+          description: check.msg,
+          title: "Error!"
+        })
+        // router.push(`/play`)
+
+      }
+
+    }
+    checkBetVaidity()
     fetchWinner();
   }, [gameId]);
   if (isLoading) {
@@ -107,7 +105,7 @@ export default function Winner(){
               <span className="font-semibold">Challenger Score:</span>{" "}
               {data.joinerScore !== null ? data.joinerScore : "—"}
             </p>
-            <p className="flex items-center">
+            {data?.winner && <p className="flex items-center">
               <span className="font-semibold mr-2">Winner:</span>{" "}
               {data.winner ? (
                 <span className="inline-flex items-center">
@@ -116,7 +114,7 @@ export default function Winner(){
               ) : (
                 "—"
               )}
-            </p>
+            </p>}
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">

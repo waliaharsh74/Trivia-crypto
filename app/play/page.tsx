@@ -15,8 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { getUniqueSlug, createGame } from "../server"
 import { toast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { useSendTransaction, useBalance, useWaitForTransactionReceipt, useWriteContract } from 'wagmi'
-import { waitForTransactionReceipt } from 'wagmi/actions'
+import { useBalance, useWaitForTransactionReceipt, useWriteContract } from 'wagmi'
 import { wagmiAbi } from "@/utils/Abt"
 import { parseEther } from 'viem'
 
@@ -63,11 +62,16 @@ export default function PlayPage() {
           })
           console.log("Transaction confirmed ✅")
           router.push(`/game/${slugRef}`)
-          setCreating(false)
+          
         }
         
-      } catch (error) {
+      } catch (error: any) {
         console.log(error);
+        toast({
+          title: "Transaction Failed!",
+          description: error?.message ||"Unknown Error"
+        })
+        setCreating(false)
       }
       
     }
