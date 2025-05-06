@@ -5,7 +5,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreBuildErrors: true,
+    // ignoreBuildErrors: true,
   },
   images: {
     unoptimized: true,
@@ -15,9 +15,7 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   
-    serverActions: {
-      enabled: false,  
-    },
+    
     typedRoutes: false,
   },
 }
