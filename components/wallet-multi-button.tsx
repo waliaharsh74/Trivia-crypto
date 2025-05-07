@@ -20,7 +20,7 @@ export function WalletMultiButton() {
   
   if (isConnected && address) {
     return (
-      <Button variant="outline" onClick={() => disconnect()} className="font-mono">
+      <Button variant="outline" onClick={() => disconnect()} className="font-mono border-2">
         {address.slice(0, 6)}...{address.slice(-4)}
       </Button>
     )
@@ -33,11 +33,11 @@ export function WalletMultiButton() {
     <Button
       onClick={() => connect({ connector: primaryConnector })}
       disabled={isConnecting}
-      className="font-mono"
+      className="font-mono border-2 border-[#f7f7d9]  text-[#f7f7d9]"
     >
       {isConnecting ? (
         <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
           Connecting...
         </>
       ) : (

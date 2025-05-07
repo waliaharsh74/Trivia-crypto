@@ -200,10 +200,7 @@ export default function PlayPage() {
 
   return (
     <div className="container px-4 py-12">
-      {/* <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Play CryptoTrivia</h1>
-        <WalletMultiButton />
-      </div> */}
+    
 
       <Tabs defaultValue="create" className="w-full max-w-3xl mx-auto">
         <TabsList className="grid w-full grid-cols-3">
@@ -303,47 +300,7 @@ export default function PlayPage() {
       </Tabs>
       <Toaster />
 
-      {/* <div className="mt-8 max-w-3xl mx-auto">
-        <h2 className="text-xl font-semibold mb-4">Active Games</h2>
-        <div className="grid gap-4 md:grid-cols-2">
-     
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Science Trivia</CardTitle>
-              <CardDescription>Created 2 minutes ago</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm">
-                <p>Bet: 0.05 ETH</p>
-                <p>Status: Waiting for opponent</p>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline" className="w-full" onClick={() => handleJoinGame("sample-game-1")}>
-                Join Game
-              </Button>
-            </CardFooter>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Crypto Knowledge</CardTitle>
-              <CardDescription>Created 5 minutes ago</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm">
-                <p>Bet: 0.1 SOL</p>
-                <p>Status: Waiting for opponent</p>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline" className="w-full" onClick={() => handleJoinGame("sample-game-2")}>
-                Join Game
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-      </div> */}
+    
     </div>
   )
 }

@@ -1,130 +1,201 @@
+"use client"
 
+import { useLayoutEffect, useRef } from "react"
+import gsap from "gsap"
+import { Flip } from "gsap/Flip"
+import { TextPlugin } from "gsap/TextPlugin"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { SvgMotion } from "./svgs"
+import OrangeAnimation from "./svgs/OrangeAnimation"
 
-
-
+gsap.registerPlugin(Flip, TextPlugin)
 
 export default function Home() {
+  const container = useRef<HTMLDivElement | null>(null)
+
+  useLayoutEffect(() => {
+    if (!container.current) return
+
+    const ctx = gsap.context(() => {
+
+      const c = gsap.utils.selector(container)
+
+
+      gsap.fromTo(
+        c(".char-c"),
+        { rotation: 180, opacity: 0 },
+        { rotation: 0, opacity: 1, ease: "back.out(1.7)", duration: 0.7 }
+      )
+
+      gsap.fromTo(
+        c(".svg-pop"),
+        { scale: 0, opacity: 0, x: -40 },
+        { scale: 1, opacity: 1, x: 0, ease: "back.out(2)", duration: 0.5, delay: 0.5 }
+      )
+
+
+      const tlR = gsap.timeline({ delay: 1 })
+      tlR.fromTo(
+        c(".char-r"),
+        { y: -120, opacity: 0, scale: 2 },
+        { y: 0, opacity: 1, scale: 1, ease: "power4.out", duration: 0.6 }
+      )
+      tlR.to(
+        c(".svg-pop"),
+        {
+          x: 200, y: -200, rotation: -90, opacity: 0, duration: 0.7, ease: "back.in(1.7)", onComplete: () => {
+            gsap.set(c(".svg-pop"), { display: "none" })
+          },
+        },
+        "-=0.5"
+      )
+
+
+
+      gsap.fromTo(
+        c(".char-y"),
+        { y: -200, opacity: 0 },
+        { y: 0, opacity: 1, ease: "bounce.out", duration: 0.9, delay: 1.2 }
+      )
+
+
+      const chars: string[] = ['p', 't', 'o'];
+
+      chars.forEach((ch: string, i: number) => {
+        gsap.fromTo(
+          c(`.slot-${ch}`),
+          { text: { value: "X", delimiter: "" } ,
+        display:"none"},
+          {
+            text: { value: ch, delimiter: "" },
+            ease: "none",
+            duration: 0.8,
+            
+            delay: 1.6 + i * 0.2,
+            display:"block"
+          },
+          
+        );
+      });
+
+
+
+      const tlTrivia = gsap.timeline({ delay: 2.4 })
+      tlTrivia.from(c(".char-T"), { y: 120, opacity: 0, duration: 0.6, ease: "back.out(1.7)" })
+      tlTrivia.from(c(".char-r2"), { rotationY: 90, opacity: 0, duration: 0.5 }, "-=0.3")
+
+
+      tlTrivia.from(c(".svg-i"), { scale: 0, opacity: 0, duration: 0.4, ease: "back.out" })
+      tlTrivia.to(
+        c(".svg-i"),
+        { scale: 0, opacity: 0, duration: 0.3, ease: "back.in" },
+        "+=0.2"
+      )
+      tlTrivia.set(c(".svg-i"), {
+        display: "none",
+      })
+
+      tlTrivia.to(c(".svg-i")[0].parentElement, {
+        width: "24px",
+        duration: 0.3,
+        ease: "power1.inOut",
+      }, "<");
+      tlTrivia.from(c(".char-i"), { scale: 3, opacity: 0, duration: 0.4, ease: "power2.out" })
+
+
+      tlTrivia.fromTo(
+        c(".char-a"),
+        { rotation: -90, transformOrigin: "left top", opacity: 0 },
+        { rotation: 0, opacity: 1, duration: 0.6, ease: "back.out(1.4)" }
+      )
+
+
+      gsap.to(c(".windmill"), { rotation: 360, repeat: -1, ease: "linear", duration: 3 })
+
+
+      gsap.to(c(".char-i"), {
+        rotationX: 360,
+        repeat: -1,
+        ease: "power1.inOut",
+        duration: 1.2,
+        transformOrigin: "center bottom",
+        repeatDelay: 3,
+
+      })
+    }, container)
+
+    return () => ctx.revert()
+  }, [])
 
   return (
-    <div className="flex flex-col min-h-screen">
-     
-      <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none">
-                  Crypto Trivia Challenge
-                </h1>
-                <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400">
-                  Test your knowledge, bet crypto, and win big in real-time multiplayer trivia games.
-                </p>
-              </div>
-              <div className="space-x-4">
-                <Link href="/play">
-                  <Button size="lg" className="px-8">
-                    Play Now
-                  </Button>
-                </Link>
-              
-              </div>
-            </div>
-          </div>
-        </section>
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-gray-100 dark:bg-gray-800">
-          <div className="container px-4 md:px-6">
-            <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-3">
-              <div className="flex flex-col items-center space-y-2 text-center">
-                <div className="p-4 bg-primary/10 rounded-full">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-6 w-6 text-primary"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                    <path d="M12 17h.01" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold">Trivia Challenges</h3>
-                <p className="text-gray-500 dark:text-gray-400">
-                  Choose from various topics and test your knowledge with AI-generated questions.
-                </p>
-              </div>
-              <div className="flex flex-col items-center space-y-2 text-center">
-                <div className="p-4 bg-primary/10 rounded-full">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-6 w-6 text-primary"
-                  >
-                    <path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 1 0 4 14.9" />
-                    <path d="M12 16v4" />
-                    <path d="m8 16 4 4 4-4" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold">Crypto Betting</h3>
-                <p className="text-gray-500 dark:text-gray-400">
-                  Place bets using SOL, ETH, and other cryptocurrencies to win big rewards.
-                </p>
-              </div>
-              <div className="flex flex-col items-center space-y-2 text-center">
-                <div className="p-4 bg-primary/10 rounded-full">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-6 w-6 text-primary"
-                  >
-                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold">Real-Time Gameplay</h3>
-                <p className="text-gray-500 dark:text-gray-400">
-                  Compete head-to-head with other players in real-time with Fluvio streams.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
-      <footer className="border-t">
-        <div className="container flex flex-col gap-2 py-4 md:flex-row md:items-center md:justify-between md:py-6">
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            &copy; {new Date().getFullYear()} CryptoTrivia. All rights reserved.
-          </p>
-          <nav className="flex gap-4 text-xs">
-            <Link href="/terms" className="text-gray-500 hover:underline dark:text-gray-400">
-              Terms of Service
-            </Link>
-            <Link href="/privacy" className="text-gray-500 hover:underline dark:text-gray-400">
-              Privacy Policy
-            </Link>
-          </nav>
+    <div
+      ref={container}
+      className="min-h-screen flex flex-col items-center justify-center bg-black text-[clamp(2rem,10vw,8rem)] font-extrabold text-[#f7f7d9] overflow-hidden"
+    >
+
+      <div className="relative flex items-end leading-none space-x-2">
+        <span className="char-c inline-block">C</span>
+        <svg
+          className="svg-pop w-16 h-16 text-pink-400"
+          viewBox="0 0 100 100"
+          fill="currentColor"
+        >
+          <circle cx="50" cy="50" r="50" />
+        </svg>
+        <span className="char-r inline-block">r</span>
+        <span className="char-y inline-block">y</span>
+        <span className="slot-p inline-block">p</span>
+        <span className="slot-t inline-block">t</span>
+        <span className="slot-o inline-block">o</span>
+
+
+        <SvgMotion />
+
+
+      </div>
+
+
+      <div className="flex items-end leading-none space-x-2 text-[clamp(1.5rem,6vw,5rem)] mt-4">
+        <span className="char-T inline-block">T</span>
+        <span className="char-r2 inline-block">r</span>
+        <span className="char-v inline-block">v</span>
+        <div className="relative w-[3ch]">
+          <svg
+            className="svg-i absolute inset-0 w-full h-full text-teal-400"
+            viewBox="0 0 100 100"
+            fill="currentColor"
+          >
+            <rect x="30" y="0" width="40" height="100" rx="10" />
+          </svg>
+
+          <OrangeAnimation />
+          <span className="char-i inline-block  inset-0">i</span>
         </div>
-      </footer>
+        <span className="char-a inline-block">a</span>
+      </div>
+      <div className="space-x-4">
+        <Link href="/play">
+          <Button className="
+      px-8 py-8 
+      text-[clamp(1rem,4vw,2rem)] 
+      text-transparent bg-clip-text 
+      bg-gradient-to-r from-[#f7f7d9] via-[#ffeb99] to-[#ffd54f] 
+      hover:from-[#ffd54f] hover:to-[#ffeb99] 
+      border-2 border-[#f7f7d9] 
+      rounded-full 
+      shadow-lg 
+      transition-all duration-300 ease-in-out 
+      hover:scale-105 active:scale-95
+    "
+          >
+            Play Now
+          </Button>
+        </Link>
+      </div>
+
+
+
     </div>
   )
 }
