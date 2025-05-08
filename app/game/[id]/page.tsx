@@ -48,11 +48,11 @@ export default function GamePage() {
   const [gameState, setGameState] = useState<GameState>({
     status: "waiting",
     currentQuestionIndex: 0,
-    timeRemaining: 150,
+    timeRemaining: 900,
     playerScore: 0,
     questions: [],
     playerAnswers: [],
-    totalTime: 150,
+    totalTime: 900,
     submitted: false
   })
 
@@ -257,7 +257,7 @@ export default function GamePage() {
 
     }
     setJoining(true)
-    console.log("object");
+   
 
     try {
       const tx = await writeContractAsync({

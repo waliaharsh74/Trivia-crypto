@@ -8,6 +8,9 @@ import { NavBar } from '@/components/NavBar'
 export const metadata: Metadata = {
   title: 'Crypto Tivia',
   description: 'Created by Walia',
+  icons:{
+    icon:'logo.png'
+  }
   
 }
 

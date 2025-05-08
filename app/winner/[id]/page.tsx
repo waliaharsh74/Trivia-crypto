@@ -10,7 +10,7 @@ import { Loader2, Trophy, AlertCircle, ChevronLeft, ChevronRight } from "lucide-
 
 
 
-import { CheckWinner, isBetValid } from "@/app/server"
+import { CheckWinner, isBetValid, updateWinner } from "@/app/server"
 import { toast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import FancyButton from "@/components/ui/FancyButton"
@@ -60,11 +60,13 @@ export default function Winner() {
       const ConfirmTransaction = async () => {
         try {
           if (result?.isFetched && result.status === 'success' && txHash) {
+            await updateWinner(gameId)
             toast({
               title: "Transaction confirmed ✅",
-              description: "redirecting you to game"
+              description: "Bet is resolved Successfully!"
             })
             console.log("Transaction confirmed ✅")
+            setResolving(false)
         
             
           }
