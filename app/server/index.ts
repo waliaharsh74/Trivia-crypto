@@ -108,9 +108,7 @@ export const startCreatorGame = async (slug: string, address: `0x${string}` | un
     const chatCompletion = await getGroqChatCompletion(bet.topic);
     const raw = chatCompletion.choices[0]?.message?.content || '';
     
-    // console.log("raw",raw);
     const jsonString = raw.trim().replace(/^```json\s*/, '').replace(/\s*```$/, '');
-        // console.log("jsonst", jsonString);
 
     const allQuestions = await prisma.question.findMany({ where: { slug } });
     if (allQuestions.length != 0) {
@@ -199,10 +197,41 @@ export const userValidity = async (slug: string, address: `0x${string}` | undefi
 
     return { msg: "Bet Joined Successfully!", userValid: true };
 };
+export const updateWinner = async (slug: string) => {
+    
+
+    if (!slug) return { msg: "slug is empty" };
+    const data = await client.readContract({
+        address: CONTRACT_ADDRESS,
+        abi: wagmiAbi,
+        functionName: 'getBet',
+        args: [slug],
+    }) as Bet
+    console.log(data);
+    
+
+    const bet = await prisma.bet.update({
+        where: { slug },
+        data:{winner:data.winner},
+
+        
+    });
+
+    if (!bet) return { msg: "Error in finding Bet" };
+
+
+
+
+
+    
+
+
+    return { msg: "Bet Resolved Successfully!" };
+};
 
 export const calculateScore = async (answers: (number | null)[], slug: string, address: `0x${string}` | undefined) => {
     
-    // const sig = 0
+   
     if (answers.length === 0 || !address || !slug) return {score:0};
 
     const questionWithAnswers = await prisma.question.findMany({ where: { slug } });
@@ -229,6 +258,9 @@ export const calculateScore = async (answers: (number | null)[], slug: string, a
             where: { slug },
             data: { joinerCompleted: true, joinerScore: score }
         });
+        const tx = await trivia.submitScore(slug, address, score);
+        console.log("score tx:", tx.hash);
+        await tx.wait(1);  
     }
   
 
