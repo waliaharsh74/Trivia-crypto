@@ -17,6 +17,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { Input } from "@/components/ui/input"
 import { wagmiAbi } from "@/utils/Abt"
 import { parseEther } from "viem"
+import FancyButton from "@/components/ui/FancyButton"
 const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS! as `0x${string}`
 
 
@@ -335,26 +336,21 @@ export default function GamePage() {
                   <span className="font-semibold">Bet Amount:</span> {amount} ETH
                 </p>
                 {isConnected && (
-                  <Button
-                    className="w-full"
-                    onClick={handleJoin}
-                    disabled={joining  }
-                  >
-                    {joining  ? (
+                  <FancyButton onClick={handleJoin} className="w-full" disabled={joining  }>{joining  ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Joining...
                       </>
                     ) : (
                       "Join Bet"
-                    )}
-                  </Button>
+                    )}</FancyButton>
+                
                 )}
               </>
             )}
           </CardContent>
           <CardFooter>
-            <Button variant="link" onClick={() => router.push('/play')}>Back</Button>
+            <Button variant="link" className="text-[#f7f7d9]" onClick={() => router.push('/play')}>Back</Button>
           </CardFooter>
         </Card>
         <Toaster />
@@ -376,18 +372,15 @@ export default function GamePage() {
             <Label>Game ID</Label>
             <Input readOnly value={gameId} className="font-mono mb-4" />
 
-            {/* <p className="mb-2">
-              <span className="font-semibold">Player:</span> {address}
-            </p> */}
+         
             <p className="mb-2">
               <span className="font-semibold">Topic:</span> {topic}
             </p>
             <p className="mb-4">
               <span className="font-semibold">Bet Amount:</span> {amount} ETH
             </p>
-            {/* <div className="text-xl  mb-4">Game Id: {ad}</div> */}
-
-            <Button className="w-full" onClick={handleStartGame} disabled={!betValid}>
+          
+            <FancyButton onClick={handleStartGame} className="w-full">
               {gameStaring ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -396,10 +389,13 @@ export default function GamePage() {
               ) : (
                 "Start Game"
               )}
-            </Button>
+            </FancyButton>
+
+           
           </CardContent>
           <CardFooter>
-            <Button variant="link" onClick={() => router.push('/play')}>Back</Button>
+            
+            <Button variant="link" className="text-[#f7f7d9]" onClick={() => router.push('/play')}>Back</Button>
           </CardFooter>
         </Card>
         <Toaster />
@@ -417,7 +413,8 @@ export default function GamePage() {
             <h2 className="text-2xl font-bold mb-4">Game Completed!</h2>
             <p className="text-xl mb-6">Your Score: {gameState.playerScore}/{gameState.questions.length}</p>
             <div className="flex gap-4 justify-center">
-              <Button onClick={() => router.push("/")}>Home</Button>
+              <FancyButton onClick={() => router.push("/")} className="w-full">Home</FancyButton>
+       
             </div>
           </CardContent>
         </Card>
@@ -475,30 +472,16 @@ export default function GamePage() {
         </Card>
 
         <div className="flex justify-between">
-          <Button
-            variant="outline"
-            onClick={() => handleQuestionNavigation("prev")}
-            disabled={gameState.currentQuestionIndex === 0}
-          >
-            <ChevronLeft className="mr-2 h-4 w-4" /> Previous
-          </Button>
+          <FancyButton onClick={() => handleQuestionNavigation("prev")}
+            disabled={gameState.currentQuestionIndex === 0}>  <ChevronLeft className="mr-2 h-4 w-4" /> Previous</FancyButton>
+         
 
-          <Button
-            variant="outline"
-            onClick={() => handleQuestionNavigation("next")}
+          <FancyButton onClick={() => handleQuestionNavigation("next")}
             disabled={gameState.currentQuestionIndex === gameState.questions.length - 1}
-          >
-            Next <ChevronRight className="ml-2 h-4 w-4" />
-          </Button>
+          >  Next <ChevronRight className="ml-2 h-4 w-4" /></FancyButton>
         </div>
-
-        <Button
-          className="w-full mt-4"
-          onClick={handleSubmitAnswers}
-          disabled={gameState.playerAnswers.some(a => a === null) ||oneTimeSubmitted}
-        >
-          Submit Answers
-        </Button>
+        <FancyButton onClick={handleSubmitAnswers} className="w-full" disabled={gameState.playerAnswers.some(a => a === null) || oneTimeSubmitted}>Submit Answers</FancyButton>
+       
       </div>
       <Toaster />
     </div>

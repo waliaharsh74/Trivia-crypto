@@ -73,7 +73,7 @@ export default function Winner() {
       <div className="container flex flex-col items-center justify-center min-h-screen px-4">
         <AlertCircle className="w-12 h-12 text-red-500" />
         <p className="mt-4 text-lg">{error || "Bet Not Found"}</p>
-        <Button variant="link" onClick={() => router.push("/play")}>
+        <Button variant="link" className="text-[#f7f7d9]" onClick={() => router.push("/play")}>
           <ChevronLeft className="mr-2" /> Back
         </Button>
       </div>
@@ -118,7 +118,7 @@ export default function Winner() {
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button variant="link" onClick={() => router.push("/play")}>
+          <Button variant="link" className="text-[#f7f7d9]" onClick={() => router.push("/play")}>
             <ChevronLeft className="mr-2" /> Back
           </Button>
         </CardFooter>

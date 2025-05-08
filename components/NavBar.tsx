@@ -9,7 +9,7 @@ export function NavBar() {
     const titleRef = useRef<HTMLAnchorElement | null>(null)
     const [animIndex, setAnimIndex] = useState(0)
 
-    // Define the four hover animations
+   
     const hoverAnims = [
         () => gsap.fromTo(titleRef.current, { scale: 1 }, { scale: 1.1, duration: 0.3, ease: "elastic.out(1,0.5)" }),
         () => gsap.fromTo(titleRef.current, { rotation: 0 }, { rotation: 10, duration: 0.2, yoyo: true, repeat: 1, ease: "sine.inOut" }),
@@ -30,7 +30,7 @@ export function NavBar() {
                     href="/"
                     ref={titleRef}
                     onMouseEnter={handleNavHover}
-                    className="flex items-center gap-2 text-2xl font-extrabold text-[#f7f7d9] hover:text-[#ffd54f] transition-colors duration-300"
+                    className="flex items-center gap-2 text-2xl font-extrabold text-[#f7f7d9] transition-colors duration-300"
                 >
                     CryptoTrivia
                 </Link>

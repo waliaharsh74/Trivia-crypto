@@ -8,6 +8,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { SvgMotion } from "./svgs"
 import OrangeAnimation from "./svgs/OrangeAnimation"
+import FancyButton from "@/components/ui/FancyButton"
 
 gsap.registerPlugin(Flip, TextPlugin)
 
@@ -65,17 +66,19 @@ export default function Home() {
       chars.forEach((ch: string, i: number) => {
         gsap.fromTo(
           c(`.slot-${ch}`),
-          { text: { value: "X", delimiter: "" } ,
-        display:"none"},
+          {
+            text: { value: "X", delimiter: "" },
+            display: "none"
+          },
           {
             text: { value: ch, delimiter: "" },
             ease: "none",
             duration: 0.8,
-            
+
             delay: 1.6 + i * 0.2,
-            display:"block"
+            display: "block"
           },
-          
+
         );
       });
 
@@ -137,7 +140,7 @@ export default function Home() {
       <div className="relative flex items-end leading-none space-x-2">
         <span className="char-c inline-block">C</span>
         <svg
-          className="svg-pop w-16 h-16 text-pink-400"
+          className="svg-pop w-20 h-20 text-pink-400"
           viewBox="0 0 100 100"
           fill="currentColor"
         >
@@ -174,9 +177,9 @@ export default function Home() {
         </div>
         <span className="char-a inline-block">a</span>
       </div>
-      <div className="space-x-4">
+      <div className="">
         <Link href="/play">
-          <Button className="
+          {/* <Button className="
       px-8 py-8 
       text-[clamp(1rem,4vw,2rem)] 
       text-transparent bg-clip-text 
@@ -190,7 +193,10 @@ export default function Home() {
     "
           >
             Play Now
-          </Button>
+          </Button> */}
+          <FancyButton  >
+            Play Now
+          </FancyButton>
         </Link>
       </div>
 

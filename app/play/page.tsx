@@ -18,6 +18,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { useBalance, useWaitForTransactionReceipt, useWriteContract } from 'wagmi'
 import { wagmiAbi } from "@/utils/Abt"
 import { parseEther } from 'viem'
+import FancyButton from "@/components/ui/FancyButton"
 
 export default function PlayPage() {
   const router = useRouter()
@@ -155,24 +156,15 @@ export default function PlayPage() {
   if (loading) {
     return (
       <div className="container px-4 py-12 space-y-8">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-10 w-64" />
-          <Skeleton className="h-10 w-36" />
-        </div>
+        
 
         <div className="space-y-4">
-          <Skeleton className="h-12 w-full max-w-md" />
+         
           <Skeleton className="h-80 w-full max-w-3xl mx-auto" />
-          <Skeleton className="h-80 w-full max-w-3xl mx-auto" />
+         
         </div>
 
-        <div className="mt-8 max-w-3xl mx-auto space-y-4">
-          <Skeleton className="h-6 w-40" />
-          <div className="grid gap-4 md:grid-cols-2">
-            <Skeleton className="h-60 w-full" />
-            <Skeleton className="h-60 w-full" />
-          </div>
-        </div>
+        
       </div>
     )
   }
@@ -252,9 +244,12 @@ export default function PlayPage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button className="w-full" onClick={handleCreateGame} disabled={creating}>
+              <FancyButton onClick={handleCreateGame} className="w-full">
                 {creating ? "Waiting for Confirmation..." : "Create Game"}
-              </Button>
+              </FancyButton>
+              {/* <Button className="w-full" onClick={handleCreateGame} disabled={creating}>
+                {creating ? "Waiting for Confirmation..." : "Create Game"}
+              </Button> */}
             </CardFooter>
           </Card>
         </TabsContent>
@@ -272,9 +267,10 @@ export default function PlayPage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button className="w-full" onClick={handleJoinGame}>
+              <FancyButton onClick={handleJoinGame} className="w-full"> Join Game</FancyButton>
+              {/* <Button className="w-full" onClick={handleJoinGame}>
                 Join Game
-              </Button>
+              </Button> */}
             </CardFooter>
           </Card>
         </TabsContent>
@@ -291,9 +287,10 @@ export default function PlayPage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button className="w-full" onClick={handleCheckWinner}>
+              <FancyButton onClick={handleCheckWinner} className="w-full">Check Winner</FancyButton>
+              {/* <Button className="w-full" onClick={handleCheckWinner}>
                 Check Winner
-              </Button>
+              </Button> */}
             </CardFooter>
           </Card>
         </TabsContent>

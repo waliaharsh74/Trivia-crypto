@@ -18,7 +18,7 @@ body {
 
     /* Derivative shades */
     --card: 0 0% 5%;
-    --card-foreground: 42 4% 96.9%;
+    --card-foreground: 60,65%,91%;
     --popover: 0 0% 10%;
     --popover-foreground: 42 4% 96.9%;
     --primary: 42 4% 20%;
