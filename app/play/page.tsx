@@ -10,12 +10,11 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { WalletMultiButton } from "@/components/wallet-multi-button"
-import { useAccount } from "wagmi"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getUniqueSlug, createGame } from "../server"
 import { toast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { useBalance, useWaitForTransactionReceipt, useWriteContract } from 'wagmi'
+import { useBalance, useWaitForTransactionReceipt, useWriteContract, useAccount } from 'wagmi'
 import { wagmiAbi } from "@/utils/Abt"
 import { parseEther } from 'viem'
 import FancyButton from "@/components/ui/FancyButton"
@@ -55,8 +54,8 @@ export default function PlayPage() {
     const TransferToPlay = async () => {
       try {
         if (result?.isFetched && result.status === 'success' && txHash) {
-          const result = await createGame(betAmount, topic, slugRef, address, txHash)
-          console.log(result);
+          const res = await createGame(betAmount, topic, slugRef, address, txHash)
+          console.log(res);
           toast({
             title: "Transaction confirmed ✅",
             description: "redirecting you to game"
@@ -146,10 +145,17 @@ export default function PlayPage() {
   }
 
   const handleJoinGame = () => {
-
+    if (!gameId) {
+      toast({ title: "Message!", description: "Please enter Game Id to continue" })
+      return
+    }
     router.push(`/game/${gameId}`)
   }
   const handleCheckWinner = () => {
+    if(!gameId){toast({title:"Message!",description:"Please enter Game Id to continue"})
+      return
+    }
+      
 
     router.push(`/winner/${gameId}`)
   }
@@ -240,16 +246,14 @@ export default function PlayPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <p className="text-xs text-gray-500">A 3% fee will be deducted from your bet.</p>
+                <p className="text-xs text-[#f7f7d9]">A 3% platform fee will be deducted from your bet.</p>
               </div>
             </CardContent>
             <CardFooter>
               <FancyButton onClick={handleCreateGame} className="w-full">
                 {creating ? "Waiting for Confirmation..." : "Create Game"}
               </FancyButton>
-              {/* <Button className="w-full" onClick={handleCreateGame} disabled={creating}>
-                {creating ? "Waiting for Confirmation..." : "Create Game"}
-              </Button> */}
+              
             </CardFooter>
           </Card>
         </TabsContent>
@@ -268,9 +272,7 @@ export default function PlayPage() {
             </CardContent>
             <CardFooter>
               <FancyButton onClick={handleJoinGame} className="w-full"> Join Game</FancyButton>
-              {/* <Button className="w-full" onClick={handleJoinGame}>
-                Join Game
-              </Button> */}
+              
             </CardFooter>
           </Card>
         </TabsContent>
@@ -288,9 +290,7 @@ export default function PlayPage() {
             </CardContent>
             <CardFooter>
               <FancyButton onClick={handleCheckWinner} className="w-full">Check Winner</FancyButton>
-              {/* <Button className="w-full" onClick={handleCheckWinner}>
-                Check Winner
-              </Button> */}
+             
             </CardFooter>
           </Card>
         </TabsContent>

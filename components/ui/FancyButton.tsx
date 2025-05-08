@@ -91,12 +91,12 @@ const FancyButton: React.FC<FancyButtonProps> = ({ children, onClick, className 
                 } ${className}`}
             disabled={disabled}
         >
-            <span
+           { !disabled &&<span
                 ref={flairRef}
                 className="absolute inset-0 scale-0 pointer-events-none will-change-transform origin-top-left"
             >
                 <span className="absolute top-0 left-0 w-[170%] aspect-square bg-[#f7f7d9] rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
-            </span>
+            </span>}
             <span className="relative z-10">{children}</span>
         </button>
     );

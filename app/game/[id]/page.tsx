@@ -338,7 +338,7 @@ export default function GamePage() {
                 {isConnected && (
                   <FancyButton onClick={handleJoin} className="w-full" disabled={joining  }>{joining  ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {/* <Loader2 className="mr-2 h-4 w-4 animate-spin" /> */}
                         Joining...
                       </>
                     ) : (
@@ -383,7 +383,7 @@ export default function GamePage() {
             <FancyButton onClick={handleStartGame} className="w-full">
               {gameStaring ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {/* <Loader2 className="mr-2 h-4 w-4 animate-spin" /> */}
                   Starting...
                 </>
               ) : (
@@ -473,12 +473,23 @@ export default function GamePage() {
 
         <div className="flex justify-between">
           <FancyButton onClick={() => handleQuestionNavigation("prev")}
-            disabled={gameState.currentQuestionIndex === 0}>  <ChevronLeft className="mr-2 h-4 w-4" /> Previous</FancyButton>
+            disabled={gameState.currentQuestionIndex === 0}>  
+
+            <div className="flex">
+
+            <ChevronLeft className="mr-2 h-4 w-4 mt-2" /> Previous
+            </div>
+            </FancyButton>
          
 
           <FancyButton onClick={() => handleQuestionNavigation("next")}
             disabled={gameState.currentQuestionIndex === gameState.questions.length - 1}
-          >  Next <ChevronRight className="ml-2 h-4 w-4" /></FancyButton>
+          > 
+            <div className="flex">
+
+           Next <ChevronRight className="ml-2 h-4 w-4 mt-2" />
+            </div>
+          </FancyButton>
         </div>
         <FancyButton onClick={handleSubmitAnswers} className="w-full" disabled={gameState.playerAnswers.some(a => a === null) || oneTimeSubmitted}>Submit Answers</FancyButton>
        

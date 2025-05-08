@@ -160,8 +160,11 @@ export const isBetValid = async (slug: string, address: `0x${string}` | undefine
     const bet = await prisma.bet.findFirst({ where: { slug } });
     if (!bet) return { msg: `Oops No bet exists for Game ID: ${slug}`, isValid: false };
 
-    if (bet.joinerCompleted && bet.creatorCompleted) {
+    if (bet.joinerCompleted && bet.creatorCompleted && bet.winner) {
         return { msg: `Bet is already resolved`, isValid: false };
+    }
+    if (bet.joinerCompleted && bet.creatorCompleted ) {
+        return { msg: `Bet is completed by both players`, isValid: false };
     }
 
     if (bet.creatorId !== address && !bet.joinerId) {
@@ -243,14 +246,18 @@ export const CheckWinner = async (slug: string) => {
 
     const bet = await prisma.bet.findFirst({ where: { slug } });
     if (!bet) {
-        return { msg: `Oops No bet exists for Game ID: ${slug}`, creatorScore: null, joinerScore: null, winner: null };
+        return { msg: `Oops No bet exists for Game ID: ${slug}`, creatorScore: null, joinerScore: null, winner: null ,canResolve:false};
     }
 
-    if (bet.joinerCompleted && bet.creatorCompleted) {
-        return { msg: `Winner will get amount Shortly!`, creatorScore: bet.cretorScore, joinerScore: bet.joinerScore, winner: bet.winner };
+    if (bet.joinerCompleted && bet.creatorCompleted && bet.winner) {
+        return { msg: `Bet is resolved Already!`, creatorScore: bet.cretorScore, joinerScore: bet.joinerScore, winner: bet?.winner, canResolve :false};
+    } 
+    if (bet.joinerCompleted && bet.creatorCompleted && bet.cretorScore && bet.joinerScore) {
+        const winner = (bet?.cretorScore > bet?.joinerScore) ? bet.creatorId : bet.joinerId
+        return { msg: `Resolve this Bet for Winner!`, creatorScore: bet.cretorScore, joinerScore: bet.joinerScore, winner, canResolve:true };
     }
 
-    return { msg: `Bet is not completed yet`, creatorScore: bet.cretorScore, joinerScore: bet.joinerScore, winner: bet.winner };
+    return { msg: `Bet is not completed yet`, creatorScore: bet.cretorScore, joinerScore: bet.joinerScore, winner: bet.winner, canResolve:false };
 };
 
 interface Question {
