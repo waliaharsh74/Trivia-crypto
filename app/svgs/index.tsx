@@ -26,7 +26,7 @@ export function SvgMotion() {
     }, [])
 
     return (
-        <div className=" w-20 h-20 flex items-center justify-center  overflow-hidden m-0 p-0 windmill absolute -top-12 left-1/2 -translate-x-1/2 text-emerald-400 opacity-80" >
+        <div className=" w-20 h-20 flex items-center justify-center  overflow-hidden m-0 p-0 windmill absolute -top-[4.5rem] left-1/2 -translate-x-1/2 text-emerald-400 opacity-80" >
             <svg
                 id="svg-stage"
                 xmlns="http://www.w3.org/2000/svg"

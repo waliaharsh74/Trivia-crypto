@@ -5,7 +5,6 @@ import gsap from "gsap"
 import { Flip } from "gsap/Flip"
 import { TextPlugin } from "gsap/TextPlugin"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import { SvgMotion } from "./svgs"
 import OrangeAnimation from "./svgs/OrangeAnimation"
 import FancyButton from "@/components/ui/FancyButton"
@@ -84,6 +83,12 @@ export default function Home() {
 
 
 
+
+      const element = document.querySelector('.calw')! as HTMLElement;
+
+
+      const w = element.offsetWidth;
+      const width3ch = w
       const tlTrivia = gsap.timeline({ delay: 2.4 })
       tlTrivia.from(c(".char-T"), { y: 120, opacity: 0, duration: 0.6, ease: "back.out(1.7)" })
       tlTrivia.from(c(".char-r2"), { rotationY: 90, opacity: 0, duration: 0.5 }, "-=0.3")
@@ -95,12 +100,13 @@ export default function Home() {
         { scale: 0, opacity: 0, duration: 0.3, ease: "back.in" },
         "+=0.2"
       )
+
       tlTrivia.set(c(".svg-i"), {
         display: "none",
       })
 
       tlTrivia.to(c(".svg-i")[0].parentElement, {
-        width: "24px",
+        width: width3ch / 6.4,
         duration: 0.3,
         ease: "power1.inOut",
       }, "<");
@@ -140,7 +146,7 @@ export default function Home() {
       <div className="relative flex items-end leading-none space-x-2">
         <span className="char-c inline-block">C</span>
         <svg
-          className="svg-pop w-20 h-20 text-pink-400"
+          className="svg-pop w-8 h-8 lg:w-20 lg:h-20 text-pink-400"
           viewBox="0 0 100 100"
           fill="currentColor"
         >
@@ -154,8 +160,6 @@ export default function Home() {
 
 
         <SvgMotion />
-
-
       </div>
 
 
@@ -163,7 +167,7 @@ export default function Home() {
         <span className="char-T inline-block">T</span>
         <span className="char-r2 inline-block">r</span>
         <span className="char-v inline-block">v</span>
-        <div className="relative w-[3ch]">
+        <div className="relative w-[3ch] calw">
           <svg
             className="svg-i absolute inset-0 w-full h-full text-teal-400"
             viewBox="0 0 100 100"
@@ -179,21 +183,7 @@ export default function Home() {
       </div>
       <div className="">
         <Link href="/play">
-          {/* <Button className="
-      px-8 py-8 
-      text-[clamp(1rem,4vw,2rem)] 
-      text-transparent bg-clip-text 
-      bg-gradient-to-r from-[#f7f7d9] via-[#ffeb99] to-[#ffd54f] 
-      hover:from-[#ffd54f] hover:to-[#ffeb99] 
-      border-2 border-[#f7f7d9] 
-      rounded-full 
-      shadow-lg 
-      transition-all duration-300 ease-in-out 
-      hover:scale-105 active:scale-95
-    "
-          >
-            Play Now
-          </Button> */}
+
           <FancyButton  >
             Play Now
           </FancyButton>
