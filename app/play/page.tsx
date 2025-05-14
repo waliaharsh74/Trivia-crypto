@@ -250,7 +250,7 @@ export default function PlayPage() {
               </div>
             </CardContent>
             <CardFooter>
-              <FancyButton onClick={handleCreateGame} className="w-full">
+              <FancyButton onClick={handleCreateGame} disabled={creating} className="w-full">
                 {creating ? "Waiting for Confirmation..." : "Create Game"}
               </FancyButton>
               

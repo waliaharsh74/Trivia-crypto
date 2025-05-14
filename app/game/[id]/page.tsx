@@ -380,7 +380,7 @@ export default function GamePage() {
               <span className="font-semibold">Bet Amount:</span> {amount} ETH
             </p>
           
-            <FancyButton onClick={handleStartGame} className="w-full">
+            <FancyButton onClick={handleStartGame} disabled={gameStaring} className="w-full">
               {gameStaring ? (
                 <>
                   {/* <Loader2 className="mr-2 h-4 w-4 animate-spin" /> */}
