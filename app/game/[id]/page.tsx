@@ -491,7 +491,15 @@ export default function GamePage() {
             </div>
           </FancyButton>
         </div>
-        <FancyButton onClick={handleSubmitAnswers} className="w-full" disabled={gameState.playerAnswers.some(a => a === null) || oneTimeSubmitted}>Submit Answers</FancyButton>
+        <FancyButton onClick={handleSubmitAnswers} className="w-full" disabled={gameState.playerAnswers.some(a => a === null) || oneTimeSubmitted}>
+        {oneTimeSubmitted  ? (
+                      <>
+                        Submitting...
+                      </>
+                    ) : (
+                      "Submit Answers"
+                    )}
+        </FancyButton>
        
       </div>
       <Toaster />

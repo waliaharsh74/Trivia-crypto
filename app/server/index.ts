@@ -115,7 +115,7 @@ export const startCreatorGame = async (slug: string, address: `0x${string}` | un
         const stripped = allQuestions.map(({ question, options }) => ({ question, options }));
         return { msg: 'success', content: { questions: stripped } };
     }
-
+   
     
         const parsed = JSON.parse(jsonString);
         
@@ -145,7 +145,8 @@ export async function getGroqChatCompletion(topic: string) {
                 2. Difficulty: Suitable for adults with general knowledge.
                 3. Options: 4 per question, 1 correct. Distractors must be plausible.
                 4. Sub-topics: Include physics, chemistry, biology, and astronomy.
-                5. Avoid trick questions or overly technical terms.`,
+                5. Avoid trick questions or overly technical terms.
+                6. Output strictly in JSON format with no preamble or explanation.`
             },
         ],
         model: "llama-3.3-70b-versatile",
